@@ -12,103 +12,103 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  intl: any
+  intl: ^0.20.2 # Required by Flutter 3.38.6 SDK
 
   # Firebase Core
-  firebase_core: ^3.13.0
+  firebase_core: ^3.0.0
   
   # Firebase Authentication
-  firebase_auth: ^5.6.0
-  google_sign_in: ^6.3.0
+  firebase_auth: ^5.0.0
+  google_sign_in: ^6.0.0
   
   # Firebase Firestore
-  cloud_firestore: ^5.10.0
+  cloud_firestore: ^5.0.0
   
   # Firebase Cloud Messaging (Notifications)
-  firebase_messaging: ^15.3.0
-  flutter_local_notifications: ^19.4.0
+  firebase_messaging: ^15.0.0
+  flutter_local_notifications: ^19.0.0
   
   # Firebase Remote Config
-  firebase_remote_config: ^5.3.0
+  firebase_remote_config: ^5.0.0
   
   # Firebase Analytics
-  firebase_analytics: ^11.6.0
+  firebase_analytics: ^11.0.0
   
   # Firebase Crashlytics
-  firebase_crashlytics: ^4.4.0
+  firebase_crashlytics: ^4.0.0
   
   # Firebase Cloud Storage
-  firebase_storage: ^12.5.0
+  firebase_storage: ^12.0.0
   
   # Cloud Functions
-  cloud_functions: ^5.4.0
+  cloud_functions: ^5.0.0
   
   # Google Maps
-  google_maps_flutter: ^2.12.1
+  google_maps_flutter: ^2.10.0
   
   # Google AdMob
-  google_mobile_ads: ^6.0.0
+  google_mobile_ads: ^5.0.0
   
   # State Management
-  flutter_bloc: ^9.1.1
-  equatable: ^2.0.7
+  flutter_bloc: ^9.0.0
+  equatable: ^2.0.0
   
   # Dependency Injection
-  get_it: ^8.0.3
-  injectable: ^2.7.0
+  get_it: ^8.0.0
+  injectable: ^2.0.0
   
   # Networking
-  dio: ^5.8.0
-  connectivity_plus: ^6.1.4
+  dio: ^5.0.0
+  connectivity_plus: ^6.0.0
   
   # Location & Sensors
-  geolocator: ^14.0.0
-  geocoding: ^4.0.0
-  sensors_plus: ^7.0.2
-  permission_handler: ^11.4.0
+  geolocator: ^13.0.0
+  geocoding: ^3.0.0
+  sensors_plus: ^6.0.0
+  permission_handler: ^11.0.0
   
   # Camera & AR
-  camera: ^0.11.2
+  camera: ^0.11.0
   
   # UI Components
-  cupertino_icons: ^1.0.8
-  flutter_svg: ^2.0.17
-  cached_network_image: ^3.4.1
-  lottie: ^3.3.1
+  cupertino_icons: ^1.0.0
+  flutter_svg: ^2.0.0
+  cached_network_image: ^3.0.0
+  lottie: ^3.0.0
   shimmer: ^3.0.0
   
   # Audio
-  just_audio: ^0.9.47
-  audio_session: ^0.1.25
+  just_audio: ^0.9.0
+  audio_session: ^0.1.0
   
   # Local Storage
-  shared_preferences: ^2.5.3
-  hive: ^4.0.0
+  shared_preferences: ^2.0.0
+  hive: ^2.0.0
   hive_flutter: ^1.1.0
   
   # Utilities
-  url_launcher: ^6.3.1
+  url_launcher: ^6.0.0
   share_plus: ^10.0.0
-  path_provider: ^2.1.6
+  path_provider: ^2.0.0
   workmanager: ^0.6.0
   
   # Date/Time Handling
   hijri: ^3.0.0
-  timezone: ^0.10.1
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^5.0.0
   
   # Code Generation
-  build_runner: ^2.4.15
-  injectable_generator: ^2.7.0
-  hive_generator: ^2.0.1
-  json_serializable: ^6.9.5
+  build_runner: ^2.0.0
+  injectable_generator: ^2.0.0
+  hive_generator: ^2.0.0
+  json_serializable: ^6.0.0
   
   # Testing
-  mockito: ^5.4.5
+  mockito: ^5.0.0
   bloc_test: ^10.0.0
 
 flutter:
@@ -122,7 +122,6 @@ flutter:
     - assets/animations/
     - assets/icons/
 
-# Localization configuration
 l10n:
   arb-dir: lib/l10n
   template-arb-file: app_en.arb
