@@ -9,6 +9,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/config/app_config.dart';
+import 'presentation/pages/home_page.dart';
 import 'firebase_options.dart';
 
 /// SIRAT - Complete Islamic Companion App
@@ -190,7 +191,11 @@ class _SplashScreenState extends State<SplashScreen>
     
     // Navigate after delay - will be replaced with proper initialization
     Future.delayed(const Duration(seconds: 3), () {
-      // TODO: Navigate to onboarding or home
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
     });
   }
 
