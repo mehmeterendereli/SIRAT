@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "852705649694",
+    "project_id": "sirat-ezan-vakti-2026",
+    "storage_bucket": "sirat-ezan-vakti-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852705649694:android:00f1dd7696319667593a0f",
+        "android_client_info": {
+          "package_name": "com.sirat.sirat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYANJTFjiUqG1t-i1yHiPHSFwsWBU15lE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
