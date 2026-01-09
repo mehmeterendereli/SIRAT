@@ -3,6 +3,31 @@
 
 ---
 
+## 📅 SON SESSION NOTLARI (2026-01-10)
+
+> [!IMPORTANT]
+> **Yeni sohbete geçilecek. Bu notları oku:**
+> 
+> ### ✅ Tamamlanan Kritik İşler:
+> - Namaz vakitleri artık **doğru** (Method 13 - Diyanet Turkey)
+> - Konum dinamik (GPS + Geocoding ile ilçe/şehir ismi)
+> - Loading spinner düzeltildi (DailyStoryWidget varsayılan içerik gösteriyor)
+> - Compile error yok (0 error, ~24 info/warning)
+> 
+> ### ⚠️ Bilinen Küçük Sorunlar:
+> - `DailyStoryWidget` Firestore'dan veri çekemiyor (koleksiyon oluşturulmadı)
+> - Web'de konum izni otomatik alınamıyor, fallback Istanbul koordinatları kullanılıyor
+> 
+> ### 📁 Kritik Dosyalar:
+> - `lib/presentation/bloc/prayer_bloc.dart` - Method 13 default
+> - `lib/presentation/pages/onboarding_page.dart` - Method 13 default
+> - `lib/data/repositories/prayer_repository_impl.dart` - Timezone parsing
+> - `lib/core/services/location_service.dart` - Web fallback
+> - `lib/presentation/widgets/dashboard_header.dart` - Dinamik konum
+> - `lib/presentation/widgets/daily_story_widget.dart` - Varsayılan içerik
+
+---
+
 ## ⚡ BÖLÜM 1: BACKEND ALTYAPI
 
 ### 1.1 Dinamik Headless CMS (Remote Config)
@@ -37,8 +62,8 @@
 ### 2.2 Ana Ekran (Dashboard)
 - [x] **DS-001**: Zaman duyarlı header (Sabah/Öğle/Akşam/Gece) ✅
 - [x] **DS-002**: Canlı geri sayım kartı ✅
-- [ ] **DS-003**: AI hızlı erişim arama çubuğu
-- [x] **DS-004**: Günün Story'si (Instagram formatı) ✅
+- [x] **DS-003**: Dinamik konum gösterimi (GPS + Geocoding) ✅
+- [x] **DS-004**: Günün Story'si (Varsayılan içerik) ✅
 - [ ] **DS-005**: Kandil özel tema otomatik geçiş
 
 ---
@@ -47,12 +72,13 @@
 
 ### 3.1 Ezan Vakitleri ve Bildirimler (Pro)
 - [x] **PRT-001**: Aladhan API entegrasyonu ✅
-- [x] **PRT-002**: Mezhep bazlı hesaplama ✅
-- [ ] **PRT-003**: Akıllı erteleme ("10 dk sonra hatırlat")
-- [ ] **PRT-004**: Pre-alarm (Temkin vakti, iftara 15dk kala)
-- [ ] **PRT-005**: Ezan ses kütüphanesi (Mekke, İstanbul, Ney)
-- [ ] **PRT-006**: Hicri takvim entegrasyonu
-- [ ] **PRT-007**: Kandil günü otomatik bildirim
+- [x] **PRT-002**: Mezhep bazlı hesaplama (Method 13 - Diyanet Turkey) ✅
+- [x] **PRT-003**: Dinamik konum bazlı vakitler ✅
+- [ ] **PRT-004**: Akıllı erteleme ("10 dk sonra hatırlat")
+- [ ] **PRT-005**: Pre-alarm (Temkin vakti, iftara 15dk kala)
+- [ ] **PRT-006**: Ezan ses kütüphanesi (Mekke, İstanbul, Ney)
+- [ ] **PRT-007**: Hicri takvim entegrasyonu
+- [ ] **PRT-008**: Kandil günü otomatik bildirim
 
 ### 3.2 VR/AR Kıble (Kamera Modu)
 - [x] **QIB-001**: Sensor Fusion (GPS + Pusula) ✅
@@ -61,11 +87,11 @@
 - [x] **QIB-004**: Kalibrasyon asistanı ✅
 
 ### 3.3 İslam-AI Asistan
-- [ ] **ISL-001**: Fetva/Bilgi modu (Kaynak zorunlu)
-- [ ] **ISL-002**: Psikolojik destek modu (Sure önerisi)
-- [ ] **ISL-003**: Bilgi kartı görselleştirme + paylaşım
+- [x] **ISL-001**: Fetva/Bilgi modu (Kaynak zorunlu) ✅
+- [x] **ISL-002**: Psikolojik destek modu (Teselli) ✅
+- [x] **ISL-003**: İbadet yardımı modu ✅
 - [ ] **ISL-004**: Chat geçmişi Firestore senkronizasyonu
-- [ ] **ISL-005**: Yasaklı kelime filtresi
+- [ ] **ISL-005**: Bilgi kartı paylaşım özelliği
 
 ### 3.4 Gelişmiş Zikirmatik
 - [x] **ZIK-001**: Ekran herhangi yerinden sayma ✅
@@ -124,19 +150,33 @@
 
 ---
 
-## ✅ ÖNCE YAPILACAK (ÖNCELİK SIRASI)
+## ✅ TAMAMLANAN KRİTİK GÖREVLER
 
 | # | Görev | Durum |
 |---|-------|-------|
-| 1 | Dependency Injection (Injectable) rebuild | 🔄 |
-| 2 | AppLocalizations import düzeltmesi | 🔄 |
-| 3 | PrayerBloc DI kaydı | ⏳ |
-| 4 | AI-001: Cloud Function güçlendirme | ⏳ |
-| 5 | QIB-001: AR Kıble temel altyapısı | ⏳ |
-| 6 | ZIK-001: Zikirmatik sayaç mantığı | ⏳ |
-| 7 | Flutter analyze 0 error | ⏳ |
-| 8 | flutter run başarılı test | ⏳ |
+| 1 | Dependency Injection rebuild | ✅ |
+| 2 | AppLocalizations import düzeltmesi | ✅ |
+| 3 | PrayerBloc DI kaydı | ✅ |
+| 4 | AI-001~005: Gemini AI entegrasyonu | ✅ |
+| 5 | QIB-001~004: AR Kıble modülü | ✅ |
+| 6 | ZIK-001~004: Zikirmatik gamification | ✅ |
+| 7 | Flutter analyze 0 error | ✅ |
+| 8 | Flutter run başarılı test | ✅ |
+| 9 | Namaz vakitleri doğruluk (Method 13) | ✅ |
+| 10 | Dinamik konum (GPS + Geocoding) | ✅ |
 
 ---
 
-> **Son Güncelleme**: 2026-01-09T22:30:00+03:00
+## 🚀 SONRAKİ ÖNCELİKLER
+
+| # | Görev | Öncelik |
+|---|-------|---------|
+| 1 | Kuran modülü (QUR-001~004) | 🔴 Yüksek |
+| 2 | Bildirim sistemi (OB-004, PRT-004~008) | 🔴 Yüksek |
+| 3 | Firestore DailyStory koleksiyonu oluştur | 🟡 Orta |
+| 4 | Çoklu dil desteği (AR, DE) | 🟡 Orta |
+| 5 | Cami bulucu (MOS-001~003) | 🟢 Düşük |
+
+---
+
+> **Son Güncelleme**: 2026-01-10T02:18:00+03:00

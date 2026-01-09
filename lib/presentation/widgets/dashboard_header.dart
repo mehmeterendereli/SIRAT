@@ -1,11 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/config/injection.dart';
+import '../../core/services/location_service.dart';
 
 /// Dashboard Header Component
-/// Displays time-based greeting and Islamic motifs.
+/// Displays time-based greeting with DYNAMIC location from GPS.
 
-class DashboardHeader extends StatelessWidget {
+class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
+
+  @override
+  State<DashboardHeader> createState() => _DashboardHeaderState();
+}
+
+class _DashboardHeaderState extends State<DashboardHeader> {
+  String _locationName = 'Konum alınıyor...';
+  
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocation();
+  }
+  
+  Future<void> _fetchLocation() async {
+    try {
+      final locationService = getIt<LocationService>();
+      final position = await locationService.getCurrentLocation();
+      
+      if (position != null) {
+        // Reverse geocode to get address
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+        
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          final district = place.subAdministrativeArea ?? place.locality ?? '';
+          final city = place.administrativeArea ?? '';
+          
+          if (mounted) {
+            setState(() {
+              _locationName = district.isNotEmpty && city.isNotEmpty
+                  ? '$district, $city'
+                  : city.isNotEmpty
+                      ? city
+                      : 'Konum belirlendi';
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Geocoding error: $e');
+      if (mounted) {
+        setState(() {
+          _locationName = 'Konum alınamadı';
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +76,7 @@ class DashboardHeader extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -54,7 +108,7 @@ class DashboardHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Başakşehir, İstanbul',
+                        _locationName, // NOW DYNAMIC!
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white70,
                         ),
