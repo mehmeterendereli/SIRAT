@@ -22,7 +22,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   String _selectedLanguage = 'tr';
   int _selectedMezhep = 1; // Default: Hanafi
-  int _selectedMethod = 12; // Default: Diyanet
+  int _selectedMethod = 13; // Default: Diyanet Turkey (Method 13 - correct one)
 
   @override
   void initState() {
@@ -164,15 +164,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
         children: [
           _buildRadioItem(
             title: 'Diyanet İşleri Başkanlığı',
-            subtitle: 'Türkiye için standart',
-            isSelected: _selectedMethod == 12,
-            onTap: () => setState(() => _selectedMethod = 12),
+            subtitle: 'Türkiye için standart (Önerilen)',
+            isSelected: _selectedMethod == 13,
+            onTap: () => setState(() => _selectedMethod = 13),
           ),
           _buildRadioItem(
-            title: 'Fazilet Takvimi (Opsiyonel)',
+            title: 'ISNA (Kuzey Amerika)',
             subtitle: 'Alternatif hesaplama',
-            isSelected: _selectedMethod == 13, // Just example ID
-            onTap: () => setState(() => _selectedMethod = 13),
+            isSelected: _selectedMethod == 2,
+            onTap: () => setState(() => _selectedMethod = 2),
+          ),
+          _buildRadioItem(
+            title: 'Muslim World League',
+            subtitle: 'Uluslararası standart',
+            isSelected: _selectedMethod == 3,
+            onTap: () => setState(() => _selectedMethod = 3),
           ),
         ],
       ),

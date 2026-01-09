@@ -15,6 +15,12 @@ class PrayerRepositoryImpl implements IPrayerRepository {
 
   PrayerRepositoryImpl(this.dioClient);
 
+  /// Parse time string to remove timezone suffix like "(EET)"
+  String _parseTimeString(String time) {
+    // Remove anything in parentheses and trim
+    return time.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
+  }
+
   @override
   Future<Either<Failure, PrayerTime>> getPrayerTimes({
     required double latitude,
@@ -36,12 +42,12 @@ class PrayerRepositoryImpl implements IPrayerRepository {
         final data = response.data['data']['timings'];
         return Right(PrayerTime(
           date: date,
-          imsak: data['Imsak'],
-          gunes: data['Sunrise'],
-          ogle: data['Dhuhr'],
-          ikindi: data['Asr'],
-          aksam: data['Maghrib'],
-          yatsi: data['Isha'],
+          imsak: _parseTimeString(data['Imsak']),
+          gunes: _parseTimeString(data['Sunrise']),
+          ogle: _parseTimeString(data['Dhuhr']),
+          ikindi: _parseTimeString(data['Asr']),
+          aksam: _parseTimeString(data['Maghrib']),
+          yatsi: _parseTimeString(data['Isha']),
         ));
       } else {
         return const Left(ServerFailure('API error: Invalid response code'));

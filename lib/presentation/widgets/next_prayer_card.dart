@@ -69,12 +69,37 @@ class _NextPrayerCardState extends State<NextPrayerCard> {
 
     return BlocBuilder<PrayerBloc, PrayerState>(
       builder: (context, state) {
-        if (state is PrayerLoading) {
-          return const Center(child: CircularProgressIndicator());
+        // Show loading for both Initial and Loading states
+        if (state is PrayerInitial || state is PrayerLoading) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
         }
 
         if (state is PrayerError) {
-          return Center(child: Text(state.message));
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 40),
+                  const SizedBox(height: 8),
+                  Text(state.message, textAlign: TextAlign.center),
+                ],
+              ),
+            ),
+          );
         }
 
         if (state is PrayerLoaded) {

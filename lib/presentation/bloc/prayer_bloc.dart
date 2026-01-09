@@ -57,7 +57,7 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
       return;
     }
 
-    final method = await userPrefs.getCalculationMethod() ?? 12; // Default: Diyanet
+    final method = await userPrefs.getCalculationMethod() ?? 13; // Default: Diyanet Turkey (Method 13)
     
     final result = await getPrayerTimes(PrayerParams(
       latitude: position.latitude,
