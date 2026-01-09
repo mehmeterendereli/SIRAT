@@ -9,7 +9,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/config/app_config.dart';
+import 'core/config/injection.dart';
+import 'core/services/remote_config_service.dart';
+import 'core/services/notification_service.dart';
+import 'data/repositories/user_preferences_repository.dart';
 import 'presentation/pages/home_page.dart';
+import 'presentation/pages/onboarding_page.dart';
 import 'firebase_options.dart';
 
 /// SIRAT - Complete Islamic Companion App
@@ -31,6 +36,15 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Dependency Injection
+  configureDependencies();
+  
+  // Initialize Remote Config (Dynamic CMS)
+  await getIt<RemoteConfigService>().initialize();
+
+  // Initialize Notifications
+  await getIt<NotificationService>().initialize();
   
   // Initialize Crashlytics
   FlutterError.onError = (errorDetails) {
@@ -189,11 +203,18 @@ class _SplashScreenState extends State<SplashScreen>
     
     _controller.forward();
     
-    // Navigate after delay - will be replaced with proper initialization
-    Future.delayed(const Duration(seconds: 3), () {
+    // Navigate after delay - check onboarding completion
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
+      
+      final prefsRepo = getIt<UserPreferencesRepository>();
+      final isComplete = await prefsRepo.isOnboardingComplete();
+      
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(
+            builder: (context) => isComplete ? const HomePage() : const OnboardingPage(),
+          ),
         );
       }
     });

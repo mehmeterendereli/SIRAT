@@ -1,19 +1,74 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 
-/// Next Prayer Card Component
-/// Displays countdown to next prayer and prayer schedule.
+/// Next Prayer Card Component (Dynamic & Active)
+/// Calculates countdown and updates every second.
 
-class NextPrayerCard extends StatelessWidget {
+class NextPrayerCard extends StatefulWidget {
   const NextPrayerCard({super.key});
+
+  @override
+  State<NextPrayerCard> createState() => _NextPrayerCardState();
+}
+
+class _NextPrayerCardState extends State<NextPrayerCard> {
+  Timer? _timer;
+  String _countdown = '00:00:00';
+  String _nextPrayerName = 'İkindi';
+  String _nextPrayerTime = '15:45';
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _calculateCountdown();
+    });
+  }
+
+  void _calculateCountdown() {
+    // TODO: Connect this to actual PrayerTimesRepository
+    // For now, mockup logic for visual verification
+    final now = DateTime.now();
+    final target = DateTime(now.year, now.month, now.day, 15, 45); // Mock Ikindi
+    
+    if (target.isAfter(now)) {
+      final diff = target.difference(now);
+      setState(() {
+        _countdown = _pathDuration(diff);
+      });
+    } else {
+      setState(() {
+        _countdown = '00:00:00';
+      });
+    }
+  }
+
+  String _pathDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$hours:$minutes:$seconds';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
     return Container(
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.cardColor,
@@ -42,7 +97,7 @@ class NextPrayerCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'İkindi',
+                    _nextPrayerName,
                     style: theme.textTheme.headlineLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -56,9 +111,9 @@ class NextPrayerCard extends StatelessWidget {
                   gradient: AppTheme.goldGradient,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  '02:45:12',
-                  style: TextStyle(
+                child: Text(
+                  _countdown,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -70,15 +125,22 @@ class NextPrayerCard extends StatelessWidget {
           const SizedBox(height: 24),
           const Divider(height: 1),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPrayerTimeItem(context, 'İmsak', '06:12', false),
-              _buildPrayerTimeItem(context, 'Öğle', '13:05', false),
-              _buildPrayerTimeItem(context, 'İkindi', '15:45', true),
-              _buildPrayerTimeItem(context, 'Akşam', '18:22', false),
-              _buildPrayerTimeItem(context, 'Yatsı', '19:54', false),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildPrayerTimeItem(context, 'İmsak', '06:12', false),
+                const SizedBox(width: 16),
+                _buildPrayerTimeItem(context, 'Öğle', '13:05', false),
+                const SizedBox(width: 16),
+                _buildPrayerTimeItem(context, 'İkindi', '15:45', true),
+                const SizedBox(width: 16),
+                _buildPrayerTimeItem(context, 'Akşam', '18:22', false),
+                const SizedBox(width: 16),
+                _buildPrayerTimeItem(context, 'Yatsı', '19:54', false),
+              ],
+            ),
           ),
         ],
       ),
