@@ -53,7 +53,6 @@ class NotificationService {
         ),
       ),
       androidScheduleMode: fln.AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
