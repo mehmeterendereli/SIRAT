@@ -18,11 +18,11 @@
 - [ ] **AN-004**: Crashlytics cihaz/ekran bazlı raporlama
 
 ### 1.3 Gemini AI Entegrasyonu
-- [ ] **AI-001**: Cloud Function `askIslamicAI` endpoint'ini güçlendir
-- [ ] **AI-002**: System Prompt katmanı (Fıkıh kuralları, kaynak zorunluluğu)
-- [ ] **AI-003**: Mezhep bazlı cevap filtresi (Hanefi/Şafi/Hanbeli/Maliki)
-- [ ] **AI-004**: Cevap kartı görselleştirme (Paylaşılabilir)
-- [ ] **AI-005**: Psikolojik/Manevi destek modu (Teselli, Dua önerisi)
+- [x] **AI-001**: Cloud Function `askIslamicAI` endpoint'ini güçlendir ✅
+- [x] **AI-002**: System Prompt katmanı (Fıkıh kuralları, kaynak zorunluluğu) ✅
+- [x] **AI-003**: Mezhep bazlı cevap filtresi (Hanefi/Şafi/Hanbeli/Maliki) ✅
+- [x] **AI-004**: Cevap kartı görselleştirme (Paylaşılabilir) ✅
+- [x] **AI-005**: Psikolojik/Manevi destek modu (Teselli, Dua önerisi) ✅
 
 ---
 
@@ -55,10 +55,10 @@
 - [ ] **PRT-007**: Kandil günü otomatik bildirim
 
 ### 3.2 VR/AR Kıble (Kamera Modu)
-- [ ] **QIB-001**: Sensor Fusion (GPS + Pusula)
-- [ ] **QIB-002**: Kamera overlay ile sanal Kabe ikonu
-- [ ] **QIB-003**: Manyetik parazit uyarısı
-- [ ] **QIB-004**: Kalibrasyon asistanı
+- [x] **QIB-001**: Sensor Fusion (GPS + Pusula) ✅
+- [x] **QIB-002**: Kamera overlay ile sanal Kabe ikonu ✅
+- [x] **QIB-003**: Manyetik parazit uyarısı ✅
+- [x] **QIB-004**: Kalibrasyon asistanı ✅
 
 ### 3.3 İslam-AI Asistan
 - [ ] **ISL-001**: Fetva/Bilgi modu (Kaynak zorunlu)
@@ -68,10 +68,10 @@
 - [ ] **ISL-005**: Yasaklı kelime filtresi
 
 ### 3.4 Gelişmiş Zikirmatik
-- [ ] **ZIK-001**: Ekran herhangi yerinden sayma
-- [ ] **ZIK-002**: Titreşim profilleri (33, 100)
-- [ ] **ZIK-003**: Hedef ve rozet sistemi (Gamification)
-- [ ] **ZIK-004**: Bulut senkronizasyonu
+- [x] **ZIK-001**: Ekran herhangi yerinden sayma ✅
+- [x] **ZIK-002**: Titreşim profilleri (33, 100) ✅
+- [x] **ZIK-003**: Hedef ve rozet sistemi (Gamification) ✅
+- [x] **ZIK-004**: Bulut senkronizasyonu ✅
 
 ### 3.5 Kuran-ı Kerim Modülü
 - [ ] **QUR-001**: Audio player ile kelime takibi (Highlighting)

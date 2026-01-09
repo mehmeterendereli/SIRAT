@@ -96,6 +96,7 @@ dependencies:
   # Date/Time Handling
   hijri: ^3.0.0
   timezone: ^0.10.0
+  flutter_compass: ^0.8.1
 
 dev_dependencies:
   flutter_test:
