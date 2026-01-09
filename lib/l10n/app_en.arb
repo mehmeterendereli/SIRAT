@@ -17,6 +17,13 @@
   "nav_ai_assistant": "Islam-AI",
   "nav_settings": "Settings",
   
+  "quickActions": "Quick Actions",
+  "zikirmatik": "Dhikr Counter",
+  "qiblaFinder": "Qibla Finder",
+  "readQuran": "Read Quran",
+  "findMosque": "Find Mosque",
+  "aiSuggestion": "Islam-AI Suggestion",
+  
   "prayer_fajr": "Fajr",
   "prayer_sunrise": "Sunrise",
   "prayer_dhuhr": "Dhuhr",

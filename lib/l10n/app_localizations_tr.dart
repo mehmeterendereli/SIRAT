@@ -45,6 +45,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nav_settings => 'Ayarlar';
 
   @override
+  String get quickActions => 'Hızlı İşlemler';
+
+  @override
+  String get zikirmatik => 'Zikirmatik';
+
+  @override
+  String get qiblaFinder => 'Kıble Bul';
+
+  @override
+  String get readQuran => 'Kuran Oku';
+
+  @override
+  String get findMosque => 'Cami Bul';
+
+  @override
+  String get aiSuggestion => 'İslam-AI Önerisi';
+
+  @override
   String get prayer_fajr => 'İmsak';
 
   @override

@@ -169,6 +169,42 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get nav_settings;
 
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get quickActions;
+
+  /// No description provided for @zikirmatik.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhikr Counter'**
+  String get zikirmatik;
+
+  /// No description provided for @qiblaFinder.
+  ///
+  /// In en, this message translates to:
+  /// **'Qibla Finder'**
+  String get qiblaFinder;
+
+  /// No description provided for @readQuran.
+  ///
+  /// In en, this message translates to:
+  /// **'Read Quran'**
+  String get readQuran;
+
+  /// No description provided for @findMosque.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Mosque'**
+  String get findMosque;
+
+  /// No description provided for @aiSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Islam-AI Suggestion'**
+  String get aiSuggestion;
+
   /// No description provided for @prayer_fajr.
   ///
   /// In en, this message translates to:

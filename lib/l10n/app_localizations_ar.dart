@@ -45,6 +45,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nav_settings => 'الإعدادات';
 
   @override
+  String get quickActions => 'Quick Actions';
+
+  @override
+  String get zikirmatik => 'Dhikr Counter';
+
+  @override
+  String get qiblaFinder => 'Qibla Finder';
+
+  @override
+  String get readQuran => 'Read Quran';
+
+  @override
+  String get findMosque => 'Find Mosque';
+
+  @override
+  String get aiSuggestion => 'Islam-AI Suggestion';
+
+  @override
   String get prayer_fajr => 'الفجر';
 
   @override

@@ -17,6 +17,13 @@
   "nav_ai_assistant": "İslam-AI",
   "nav_settings": "Ayarlar",
   
+  "quickActions": "Hızlı İşlemler",
+  "zikirmatik": "Zikirmatik",
+  "qiblaFinder": "Kıble Bul",
+  "readQuran": "Kuran Oku",
+  "findMosque": "Cami Bul",
+  "aiSuggestion": "İslam-AI Önerisi",
+  
   "prayer_fajr": "İmsak",
   "prayer_sunrise": "Güneş",
   "prayer_dhuhr": "Öğle",
