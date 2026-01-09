@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -154,7 +154,7 @@ class _SiratAppState extends State<SiratApp> with WidgetsBindingObserver {
       supportedLocales: AppConfig.supportedLocales
           .map((code) => Locale(code))
           .toList(),
-      localizationsDelegates: const [
+      localizationsDelegates: [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -204,7 +204,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
     
     // Navigate after delay - check onboarding completion
-    Future.delayed(const Duration(seconds: 3), () async {
+    Timer(const Duration(seconds: 3), () async {
       if (!mounted) return;
       
       final prefsRepo = getIt<UserPreferencesRepository>();

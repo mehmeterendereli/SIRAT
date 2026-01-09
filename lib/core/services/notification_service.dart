@@ -1,4 +1,4 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:injectable/injectable.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -8,16 +8,16 @@ import 'package:timezone/data/latest.dart' as tz_data;
 
 @lazySingleton
 class NotificationService {
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  final fln.FlutterLocalNotificationsPlugin _notifications = fln.FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
     tz_data.initializeTimeZones();
     
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings();
+    const androidSettings = fln.AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = fln.DarwinInitializationSettings();
     
     await _notifications.initialize(
-      const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      const fln.InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
   }
 
@@ -39,21 +39,21 @@ class NotificationService {
       title,
       body,
       scheduledTzDate,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
+      fln.NotificationDetails(
+        android: fln.AndroidNotificationDetails(
           'sirat_azan_channel',
           'SIRAT Azan Notifications',
           channelDescription: 'Ezan vakti bildirimleri',
-          importance: Importance.max,
-          priority: Priority.high,
-          sound: RawResourceAndroidNotificationSound(sound),
+          importance: fln.Importance.max,
+          priority: fln.Priority.high,
+          sound: fln.RawResourceAndroidNotificationSound(sound),
         ),
-        iOS: DarwinNotificationDetails(
+        iOS: fln.DarwinNotificationDetails(
           sound: '$sound.aiff',
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: fln.AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 

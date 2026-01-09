@@ -13,6 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2 # Required by Flutter 3.38.6 SDK
+  dartz: ^0.10.1
 
   # Firebase Core
   firebase_core: ^3.0.0

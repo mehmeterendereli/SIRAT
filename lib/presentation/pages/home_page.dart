@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
+import '../widgets/dashboard_header.dart';
+import '../widgets/daily_story_widget.dart';
+import '../widgets/next_prayer_card.dart';
 
 /// HomePage (Dashboard) with Time-Aware visuals
 /// Assembles all components into a scrollable view.
