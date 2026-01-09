@@ -43,7 +43,7 @@ class _QiblaPageState extends State<QiblaPage> with SingleTickerProviderStateMix
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.qiblaDirection),
+        title: Text(loc.qibla_direction),
         centerTitle: true,
         actions: [
           IconButton(

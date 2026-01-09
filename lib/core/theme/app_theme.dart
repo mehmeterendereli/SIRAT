@@ -9,6 +9,7 @@ class AppTheme {
   // Primary Brand Colors
   static const Color primaryGreen = Color(0xFF1B5E20); // Islamic Green
   static const Color primaryGold = Color(0xFFD4AF37);  // Gold Accent
+  static const Color gold = primaryGold; // Alias for backward compatibility
   static const Color pureWhite = Color(0xFFFFFFFF);
   static const Color deepBlack = Color(0xFF121212);
 

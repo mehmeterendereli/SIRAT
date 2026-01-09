@@ -48,7 +48,7 @@ class IslamAIService {
     } on FirebaseFunctionsException catch (e) {
       await _analytics.logEvent(
         name: 'ai_error',
-        parameters: {'code': e.code, 'message': e.message},
+        parameters: {'code': e.code, 'message': e.message ?? 'Unknown error'},
       );
       
       return AIResponse(
