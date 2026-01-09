@@ -12,19 +12,22 @@
 > - Namaz vakitleri artık **doğru** (Method 13 - Diyanet Turkey)
 > - Konum dinamik (GPS + Geocoding ile ilçe/şehir ismi)
 > - Loading spinner düzeltildi (DailyStoryWidget varsayılan içerik gösteriyor)
-> - Compile error yok (0 error, ~24 info/warning)
+> - **OB-004**: Onboarding bildirim izni akışı eklendi (5 adımlı)
+> - **PRT-004/005/006**: Bildirim sistemi genişletildi (snooze, pre-alarm, ses seçimi)
+> - **Settings sayfası** oluşturuldu (bildirīm ayarları, ezan sesi seçimi)
+> - **Navigation** güncellendi (Bottom nav çalışıyor, Quick Actions bağlandı)
+> - Browser testi BAŞARILI ✅
+> - Compile error yok
 > 
 > ### ⚠️ Bilinen Küçük Sorunlar:
 > - `DailyStoryWidget` Firestore'dan veri çekemiyor (koleksiyon oluşturulmadı)
 > - Web'de konum izni otomatik alınamıyor, fallback Istanbul koordinatları kullanılıyor
 > 
 > ### 📁 Kritik Dosyalar:
-> - `lib/presentation/bloc/prayer_bloc.dart` - Method 13 default
-> - `lib/presentation/pages/onboarding_page.dart` - Method 13 default
-> - `lib/data/repositories/prayer_repository_impl.dart` - Timezone parsing
-> - `lib/core/services/location_service.dart` - Web fallback
-> - `lib/presentation/widgets/dashboard_header.dart` - Dinamik konum
-> - `lib/presentation/widgets/daily_story_widget.dart` - Varsayılan içerik
+> - `lib/presentation/pages/onboarding_page.dart` - 5 adımlı onboarding, bildirim izni
+> - `lib/core/services/notification_service.dart` - Genişletilmiş bildirim servisi
+> - `lib/presentation/pages/settings_page.dart` - Ayarlar sayfası (YENİ)
+> - `lib/presentation/pages/home_page.dart` - Navigation güncellendi
 
 ---
 
@@ -57,7 +60,7 @@
 - [x] **OB-001**: Telefon dili algılama + manuel seçim ✅
 - [x] **OB-002**: Mezhep seçimi (AI ve vakit hesabı için) ✅
 - [x] **OB-003**: Konum izni ikna edici UX yazısı ✅
-- [ ] **OB-004**: Bildirim izni akışı
+- [x] **OB-004**: Bildirim izni akışı ✅
 
 ### 2.2 Ana Ekran (Dashboard)
 - [x] **DS-001**: Zaman duyarlı header (Sabah/Öğle/Akşam/Gece) ✅
@@ -74,9 +77,9 @@
 - [x] **PRT-001**: Aladhan API entegrasyonu ✅
 - [x] **PRT-002**: Mezhep bazlı hesaplama (Method 13 - Diyanet Turkey) ✅
 - [x] **PRT-003**: Dinamik konum bazlı vakitler ✅
-- [ ] **PRT-004**: Akıllı erteleme ("10 dk sonra hatırlat")
-- [ ] **PRT-005**: Pre-alarm (Temkin vakti, iftara 15dk kala)
-- [ ] **PRT-006**: Ezan ses kütüphanesi (Mekke, İstanbul, Ney)
+- [x] **PRT-004**: Akıllı erteleme ("10 dk sonra hatırlat") ✅
+- [x] **PRT-005**: Pre-alarm (Temkin vakti, iftara 15dk kala) ✅
+- [x] **PRT-006**: Ezan ses kütüphanesi (Mekke, İstanbul, Ney) ✅
 - [ ] **PRT-007**: Hicri takvim entegrasyonu
 - [ ] **PRT-008**: Kandil günü otomatik bildirim
 

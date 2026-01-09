@@ -8,42 +8,110 @@ import '../widgets/dashboard_header.dart';
 import '../widgets/daily_story_widget.dart';
 import '../widgets/next_prayer_card.dart';
 import '../../l10n/app_localizations.dart';
+import 'qibla_page.dart';
+import 'zikirmatik_page.dart';
+import 'islam_ai_page.dart';
+import 'settings_page.dart';
 
 /// HomePage (Dashboard) with Time-Aware visuals
 /// Assembles all components into a scrollable view.
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentNavIndex = 0;
+
+  final List<Widget> _pages = [
+    const _HomeContent(),
+    const QiblaPage(),
+    const IslamAIPage(), // Vakitler olarak AI kullanıyoruz şimdilik
+    const SettingsPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<PrayerBloc>()..add(FetchPrayerTimes()),
       child: Scaffold(
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              // 1. Dynamic Header
-              const DashboardHeader(),
-              
-              // 2. Daily Stories
-              const SizedBox(height: 24),
-              const DailyStoryWidget(),
-              
-              // 3. Next Prayer Card
-              const NextPrayerCard(),
-              
-              // 4. Quick Actions Grid
-              _buildQuickActions(context),
-              
-              // 5. Daily Insight Card
-              _buildAIInsightCard(context),
-              
-              const SizedBox(height: 100), // Bottom padding for Nav Bar
-            ],
-          ),
+        body: IndexedStack(
+          index: _currentNavIndex,
+          children: _pages,
         ),
         bottomNavigationBar: _buildBottomNav(context),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _currentNavIndex,
+          onTap: (index) => setState(() => _currentNavIndex = index),
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Ana Sayfa'),
+            BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: 'Kıble'),
+            BottomNavigationBarItem(icon: Icon(Icons.psychology_rounded), label: 'İslam-AI'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Ayarlar'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Home Content - Ana sayfa içeriği
+class _HomeContent extends StatelessWidget {
+  const _HomeContent();
+
+  void _navigateToPage(BuildContext context, Widget page) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => page),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // 1. Dynamic Header
+          const DashboardHeader(),
+          
+          // 2. Daily Stories
+          const SizedBox(height: 24),
+          const DailyStoryWidget(),
+          
+          // 3. Next Prayer Card
+          const NextPrayerCard(),
+          
+          // 4. Quick Actions Grid
+          _buildQuickActions(context),
+          
+          // 5. Daily Insight Card
+          _buildAIInsightCard(context),
+          
+          const SizedBox(height: 100), // Bottom padding for Nav Bar
+        ],
       ),
     );
   }
@@ -70,10 +138,18 @@ class HomePage extends StatelessWidget {
             crossAxisSpacing: 16,
             childAspectRatio: 1.5,
             children: [
-              _buildActionItem(context, loc.zikirmatik, Icons.touch_app_rounded, AppTheme.emerald),
-              _buildActionItem(context, loc.qiblaFinder, Icons.explore_rounded, Colors.orange),
-              _buildActionItem(context, loc.readQuran, Icons.auto_stories_rounded, Colors.blue),
-              _buildActionItem(context, loc.findMosque, Icons.location_on_rounded, Colors.redAccent),
+              _buildActionItem(context, loc.zikirmatik, Icons.touch_app_rounded, AppTheme.emerald, () {
+                _navigateToPage(context, const ZikirmatikPage());
+              }),
+              _buildActionItem(context, loc.qiblaFinder, Icons.explore_rounded, Colors.orange, () {
+                _navigateToPage(context, const QiblaPage());
+              }),
+              _buildActionItem(context, loc.readQuran, Icons.auto_stories_rounded, Colors.blue, () {
+                // TODO: Kuran sayfası
+              }),
+              _buildActionItem(context, loc.findMosque, Icons.location_on_rounded, Colors.redAccent, () {
+                // TODO: Cami bulucu
+              }),
             ],
           ),
         ],
@@ -81,7 +157,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionItem(BuildContext context, String title, IconData icon, Color color) {
+  Widget _buildActionItem(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
@@ -92,7 +168,7 @@ class HomePage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -175,36 +251,6 @@ class HomePage extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: 0,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Ana Sayfa'),
-            BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: 'Kıble'),
-            BottomNavigationBarItem(icon: Icon(Icons.mosque_rounded), label: 'Vakitler'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Ayarlar'),
-          ],
-        ),
-      ),
     );
   }
 }

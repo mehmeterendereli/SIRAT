@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/app_config.dart';
 import '../../core/config/injection.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/location_service.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 import 'home_page.dart';
 
 /// Onboarding Page (Bölüm 2.1)
-/// Handles Language, Mezhep, and Permission flows with premium UX.
+/// Handles Language, Mezhep, Location Permission, and Notification Permission flows.
+/// 5-step onboarding with premium UX.
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -19,19 +22,36 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  static const int _totalPages = 5;
 
   String _selectedLanguage = 'tr';
   int _selectedMezhep = 1; // Default: Hanafi
-  int _selectedMethod = 13; // Default: Diyanet Turkey (Method 13 - correct one)
+  int _selectedMethod = 13; // Default: Diyanet Turkey (Method 13)
+  
+  // Permission states
+  bool _locationGranted = false;
+  bool _notificationGranted = false;
+  bool _isRequestingPermission = false;
 
   @override
   void initState() {
     super.initState();
     getIt<AnalyticsService>().logOnboardingStart();
+    _checkExistingPermissions();
+  }
+
+  Future<void> _checkExistingPermissions() async {
+    final locationStatus = await Permission.location.status;
+    final notificationStatus = await Permission.notification.status;
+    
+    setState(() {
+      _locationGranted = locationStatus.isGranted;
+      _notificationGranted = notificationStatus.isGranted;
+    });
   }
 
   void _nextPage() {
-    if (_currentPage < 3) {
+    if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
@@ -41,12 +61,67 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
   }
 
+  Future<void> _requestLocationPermission() async {
+    setState(() => _isRequestingPermission = true);
+    
+    try {
+      final status = await Permission.location.request();
+      setState(() {
+        _locationGranted = status.isGranted;
+        _isRequestingPermission = false;
+      });
+      
+      if (status.isGranted) {
+        // Initialize location service
+        await getIt<LocationService>().getCurrentLocation();
+        getIt<AnalyticsService>().logEvent(name: 'location_permission_granted');
+      } else {
+        getIt<AnalyticsService>().logEvent(name: 'location_permission_denied');
+      }
+      
+      _nextPage();
+    } catch (e) {
+      setState(() => _isRequestingPermission = false);
+      _nextPage();
+    }
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    setState(() => _isRequestingPermission = true);
+    
+    try {
+      final status = await Permission.notification.request();
+      setState(() {
+        _notificationGranted = status.isGranted;
+        _isRequestingPermission = false;
+      });
+      
+      if (status.isGranted) {
+        getIt<AnalyticsService>().logEvent(name: 'notification_permission_granted');
+      } else {
+        getIt<AnalyticsService>().logEvent(name: 'notification_permission_denied');
+      }
+      
+      _nextPage();
+    } catch (e) {
+      setState(() => _isRequestingPermission = false);
+      _nextPage();
+    }
+  }
+
   Future<void> _finishOnboarding() async {
     final repo = getIt<UserPreferencesRepository>();
     await repo.saveLanguage(_selectedLanguage);
     await repo.saveMezhep(_selectedMezhep);
     await repo.saveCalculationMethod(_selectedMethod);
     await repo.setOnboardingComplete(true);
+    
+    getIt<AnalyticsService>().logEvent(name: 'onboarding_complete', parameters: {
+      'language': _selectedLanguage,
+      'mezhep': _selectedMezhep.toString(),
+      'location_granted': _locationGranted.toString(),
+      'notification_granted': _notificationGranted.toString(),
+    });
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -62,16 +137,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
         children: [
           PageView(
             controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(), // Disable swipe for permission pages
             onPageChanged: (page) => setState(() => _currentPage = page),
             children: [
               _buildLanguageStep(),
               _buildMezhepStep(),
               _buildCalcMethodStep(),
-              _buildPermissionStep(),
+              _buildLocationPermissionStep(),
+              _buildNotificationPermissionStep(),
             ],
           ),
           _buildTopIndicator(),
-          _buildBottomButton(),
+          if (_currentPage < 3) _buildBottomButton(),
         ],
       ),
     );
@@ -84,7 +161,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       right: 0,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(4, (index) {
+        children: List.generate(_totalPages, (index) {
           return AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -111,7 +188,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           padding: const EdgeInsets.all(18),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: Text(_currentPage == 3 ? 'Hadi Başlayalım' : 'Devam Et'),
+        child: const Text('Devam Et'),
       ),
     );
   }
@@ -185,19 +262,130 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildPermissionStep() {
+  Widget _buildLocationPermissionStep() {
     return _buildBaseStep(
-      title: 'Neredeyse Hazırız',
-      subtitle: 'Sana en yakın camiyi ve tam kıble yönünü göstermek için konuma, vaktinde uyanman için bildirimlere ihtiyacımız var.',
-      icon: Icons.security_rounded,
+      title: 'Konum İzni',
+      subtitle: 'Sana en yakın camiyi bulmak ve doğru kıble yönünü göstermek için konumuna ihtiyacımız var.',
+      icon: Icons.location_on_rounded,
       child: Column(
         children: [
-          const Icon(Icons.location_on_rounded, size: 80, color: Colors.orange),
-          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.location_on_rounded, size: 60, color: Colors.orange),
+          ),
+          const SizedBox(height: 32),
+          if (_locationGranted)
+            _buildPermissionGrantedBadge('Konum izni verildi')
+          else
+            Column(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _isRequestingPermission ? null : _requestLocationPermission,
+                  icon: _isRequestingPermission 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.check),
+                  label: Text(_isRequestingPermission ? 'İzin İsteniyor...' : 'Konum İzni Ver'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _isRequestingPermission ? null : _nextPage,
+                  child: const Text('Şimdilik Atla', style: TextStyle(color: Colors.grey)),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationPermissionStep() {
+    return _buildBaseStep(
+      title: 'Bildirim İzni',
+      subtitle: 'Namaz vakitlerini kaçırmamanız için seni vaktinde uyandıralım!',
+      icon: Icons.notifications_active_rounded,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.notifications_active_rounded, size: 60, color: AppTheme.primaryGreen),
+          ),
+          const SizedBox(height: 16),
           const Text(
-            'Konum ve bildirim izni vererek manevi yolculuğuna başlayabilirsin.',
+            'Ezan vakti geldiğinde seni hemen bilgilendireceğiz.',
             textAlign: TextAlign.center,
-            style: TextStyle(height: 1.5, color: Colors.grey),
+            style: TextStyle(color: Colors.grey, height: 1.5),
+          ),
+          const SizedBox(height: 32),
+          if (_notificationGranted)
+            _buildPermissionGrantedBadge('Bildirim izni verildi')
+          else
+            Column(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _isRequestingPermission ? null : _requestNotificationPermission,
+                  icon: _isRequestingPermission 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.notifications_active),
+                  label: Text(_isRequestingPermission ? 'İzin İsteniyor...' : 'Bildirimleri Aç'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _isRequestingPermission ? null : _finishOnboarding,
+                  child: const Text('Şimdilik Atla', style: TextStyle(color: Colors.grey)),
+                ),
+              ],
+            ),
+          if (_notificationGranted) ...[
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _finishOnboarding,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Hadi Başlayalım'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionGrantedBadge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryGreen.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: AppTheme.primaryGreen,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
