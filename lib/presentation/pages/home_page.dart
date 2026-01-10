@@ -4,9 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/injection.dart';
 import '../bloc/prayer_bloc.dart';
 import '../../core/theme/app_theme.dart';
-import '../widgets/dashboard_header.dart';
+import '../widgets/dynamic_sky/dynamic_prayer_header.dart';
 import '../widgets/daily_story_widget.dart';
-import '../widgets/next_prayer_card.dart';
 import '../widgets/premium_widgets.dart';
 import '../../l10n/app_localizations.dart';
 import 'qibla_page.dart';
@@ -99,20 +98,18 @@ class _HomeContent extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // 1. Dynamic Header with search tap
-          DashboardHeader(onSearchTap: onSearchTap),
+          // 1. Dynamic Prayer Header (Apple Weather Quality)
+          // Replaces both DashboardHeader and NextPrayerCard
+          DynamicPrayerHeader(onSearchTap: onSearchTap),
           
           // 2. Daily Stories
           const SizedBox(height: 24),
           const DailyStoryWidget(),
           
-          // 3. Next Prayer Card
-          const NextPrayerCard(),
-          
-          // 4. Quick Actions Grid
+          // 3. Quick Actions Grid
           _buildQuickActions(context),
           
-          // 5. Daily Insight Card
+          // 4. Daily Insight Card
           _buildAIInsightCard(context),
           
           const SizedBox(height: 100), // Bottom padding for Nav Bar
