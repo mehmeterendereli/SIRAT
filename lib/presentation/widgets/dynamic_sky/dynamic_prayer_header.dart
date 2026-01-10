@@ -594,19 +594,86 @@ class _FrostedGlassCard extends StatelessWidget {
               
               const SizedBox(height: 12),
               
-              // Prayer times row - Dynamic/Responsive
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _PrayerTimeChip(label: 'İmsak', time: prayer.imsak, isActive: nextPrayer['name'] == 'İmsak'),
-                  _PrayerTimeChip(label: 'Güneş', time: prayer.gunes, isActive: nextPrayer['name'] == 'Güneş'),
-                  _PrayerTimeChip(label: 'Öğle', time: prayer.ogle, isActive: nextPrayer['name'] == 'Öğle'),
-                  _PrayerTimeChip(label: 'İkindi', time: prayer.ikindi, isActive: nextPrayer['name'] == 'İkindi'),
-                  _PrayerTimeChip(label: 'Akşam', time: prayer.aksam, isActive: nextPrayer['name'] == 'Akşam'),
-                  _PrayerTimeChip(label: 'Yatsı', time: prayer.yatsi, isActive: nextPrayer['name'] == 'Yatsı'),
-                ],
+              // Prayer times row - Responsive/Scalable
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Ekran genişliğine göre chip boyutunu hesapla
+                  final availableWidth = constraints.maxWidth;
+                  final chipCount = 6;
+                  final spacing = 6.0;
+                  final totalSpacing = spacing * (chipCount - 1);
+                  final chipWidth = (availableWidth - totalSpacing) / chipCount;
+                  
+                  // Font boyutlarını chip genişliğine göre ayarla
+                  final labelFontSize = (chipWidth * 0.18).clamp(9.0, 12.0);
+                  final timeFontSize = (chipWidth * 0.24).clamp(11.0, 15.0);
+                  final verticalPadding = (chipWidth * 0.12).clamp(6.0, 10.0);
+                  
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _ResponsivePrayerChip(
+                        label: 'İmsak', 
+                        time: prayer.imsak, 
+                        isActive: nextPrayer['name'] == 'İmsak',
+                        width: chipWidth,
+                        labelFontSize: labelFontSize,
+                        timeFontSize: timeFontSize,
+                        verticalPadding: verticalPadding,
+                      ),
+                      SizedBox(width: spacing),
+                      _ResponsivePrayerChip(
+                        label: 'Güneş', 
+                        time: prayer.gunes, 
+                        isActive: nextPrayer['name'] == 'Güneş',
+                        width: chipWidth,
+                        labelFontSize: labelFontSize,
+                        timeFontSize: timeFontSize,
+                        verticalPadding: verticalPadding,
+                      ),
+                      SizedBox(width: spacing),
+                      _ResponsivePrayerChip(
+                        label: 'Öğle', 
+                        time: prayer.ogle, 
+                        isActive: nextPrayer['name'] == 'Öğle',
+                        width: chipWidth,
+                        labelFontSize: labelFontSize,
+                        timeFontSize: timeFontSize,
+                        verticalPadding: verticalPadding,
+                      ),
+                      SizedBox(width: spacing),
+                      _ResponsivePrayerChip(
+                        label: 'İkindi', 
+                        time: prayer.ikindi, 
+                        isActive: nextPrayer['name'] == 'İkindi',
+                        width: chipWidth,
+                        labelFontSize: labelFontSize,
+                        timeFontSize: timeFontSize,
+                        verticalPadding: verticalPadding,
+                      ),
+                      SizedBox(width: spacing),
+                      _ResponsivePrayerChip(
+                        label: 'Akşam', 
+                        time: prayer.aksam, 
+                        isActive: nextPrayer['name'] == 'Akşam',
+                        width: chipWidth,
+                        labelFontSize: labelFontSize,
+                        timeFontSize: timeFontSize,
+                        verticalPadding: verticalPadding,
+                      ),
+                      SizedBox(width: spacing),
+                      _ResponsivePrayerChip(
+                        label: 'Yatsı', 
+                        time: prayer.yatsi, 
+                        isActive: nextPrayer['name'] == 'Yatsı',
+                        width: chipWidth,
+                        labelFontSize: labelFontSize,
+                        timeFontSize: timeFontSize,
+                        verticalPadding: verticalPadding,
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -617,25 +684,34 @@ class _FrostedGlassCard extends StatelessWidget {
 }
 
 // =============================================================================
-// PRAYER TIME CHIP
+// RESPONSIVE PRAYER TIME CHIP
 // =============================================================================
 
-class _PrayerTimeChip extends StatelessWidget {
+class _ResponsivePrayerChip extends StatelessWidget {
   final String label;
   final String time;
   final bool isActive;
+  final double width;
+  final double labelFontSize;
+  final double timeFontSize;
+  final double verticalPadding;
   
-  const _PrayerTimeChip({
+  const _ResponsivePrayerChip({
     required this.label,
     required this.time,
     required this.isActive,
+    required this.width,
+    required this.labelFontSize,
+    required this.timeFontSize,
+    required this.verticalPadding,
   });
   
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      width: width,
+      padding: EdgeInsets.symmetric(vertical: verticalPadding),
       decoration: BoxDecoration(
         color: isActive 
             ? AppTheme.primaryGreen 
@@ -652,21 +728,24 @@ class _PrayerTimeChip extends StatelessWidget {
             label,
             style: TextStyle(
               color: isActive ? Colors.white : Colors.white70,
-              fontSize: 9,
+              fontSize: labelFontSize,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 1),
+          SizedBox(height: verticalPadding * 0.2),
           Text(
             time,
             style: TextStyle(
-              color: isActive ? Colors.white : Colors.white,
-              fontSize: 11,
+              color: Colors.white,
+              fontSize: timeFontSize,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 }
+
