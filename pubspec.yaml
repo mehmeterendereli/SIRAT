@@ -60,6 +60,7 @@ dependencies:
   
   # Networking
   dio: ^5.0.0
+  http: ^1.2.0  # For Nominatim geocoding API
   connectivity_plus: ^6.0.0
   
   # Location & Sensors
