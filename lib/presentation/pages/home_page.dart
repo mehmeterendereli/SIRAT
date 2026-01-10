@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/daily_story_widget.dart';
 import '../widgets/next_prayer_card.dart';
+import '../widgets/premium_widgets.dart';
 import '../../l10n/app_localizations.dart';
 import 'qibla_page.dart';
 import 'zikirmatik_page.dart';
@@ -52,33 +53,31 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
+    return FloatingBottomNav(
+      currentIndex: _currentNavIndex,
+      onTap: (index) => setState(() => _currentNavIndex = index),
+      items: const [
+        FloatingNavItem(
+          icon: Icons.home_rounded,
+          label: 'Ana Sayfa',
+          activeColor: Color(0xFF1B5E20),
         ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _currentNavIndex,
-          onTap: (index) => setState(() => _currentNavIndex = index),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Ana Sayfa'),
-            BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: 'Kıble'),
-            BottomNavigationBarItem(icon: Icon(Icons.psychology_rounded), label: 'İslam-AI'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Ayarlar'),
-          ],
+        FloatingNavItem(
+          icon: Icons.explore_rounded,
+          label: 'Kıble',
+          activeColor: Color(0xFFFF6F00),
         ),
-      ),
+        FloatingNavItem(
+          icon: Icons.psychology_rounded,
+          label: 'İslam-AI',
+          activeColor: Color(0xFF6A1B9A),
+        ),
+        FloatingNavItem(
+          icon: Icons.settings_rounded,
+          label: 'Ayarlar',
+          activeColor: Color(0xFF00796B),
+        ),
+      ],
     );
   }
 }

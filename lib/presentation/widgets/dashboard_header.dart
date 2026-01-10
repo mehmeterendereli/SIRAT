@@ -93,7 +93,7 @@ class _DashboardHeaderState extends State<DashboardHeader> {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
       decoration: BoxDecoration(
-        gradient: AppTheme.headerGradient,
+        gradient: AppTheme.getHeaderGradientByTime(), // Dynamic time-based gradient
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../bloc/prayer_bloc.dart';
 import '../../domain/entities/prayer_time.dart';
+import 'premium_widgets.dart';
 
 /// Next Prayer Card Component (REALLY Dynamic)
 /// Consumes PrayerBloc for real-time API data.
@@ -107,79 +108,70 @@ class _NextPrayerCardState extends State<NextPrayerCard> {
           final next = _findNextPrayer(prayer);
           _targetTime = next['time'];
 
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
+          return GlassCard(
+            glowColor: AppTheme.primaryGreen,
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sıradaki Vakit: ${state.locationName}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sıradaki Vakit',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          next['name'],
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
+                          const SizedBox(height: 4),
+                          Text(
+                            next['name'],
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.goldGradient,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _countdown,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
+                    PulsingCountdown(
+                      countdown: _countdown,
+                      color: AppTheme.primaryGold,
+                      fontSize: 20,
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                const Divider(height: 1),
                 const SizedBox(height: 20),
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        theme.dividerColor.withValues(alpha: 0.5),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildPrayerTimeItem(context, 'İmsak', prayer.imsak, next['name'] == 'İmsak'),
-                      const SizedBox(width: 16),
-                      _buildPrayerTimeItem(context, 'Güneş', prayer.gunes, next['name'] == 'Güneş'),
-                      const SizedBox(width: 16),
-                      _buildPrayerTimeItem(context, 'Öğle', prayer.ogle, next['name'] == 'Öğle'),
-                      const SizedBox(width: 16),
-                      _buildPrayerTimeItem(context, 'İkindi', prayer.ikindi, next['name'] == 'İkindi'),
-                      const SizedBox(width: 16),
-                      _buildPrayerTimeItem(context, 'Akşam', prayer.aksam, next['name'] == 'Akşam'),
-                      const SizedBox(width: 16),
-                      _buildPrayerTimeItem(context, 'Yatsı', prayer.yatsi, next['name'] == 'Yatsı'),
+                      PrayerTimeChip(label: 'İmsak', time: prayer.imsak, isActive: next['name'] == 'İmsak', activeColor: AppTheme.primaryGreen),
+                      const SizedBox(width: 10),
+                      PrayerTimeChip(label: 'Güneş', time: prayer.gunes, isActive: next['name'] == 'Güneş', activeColor: AppTheme.sunriseOrange),
+                      const SizedBox(width: 10),
+                      PrayerTimeChip(label: 'Öğle', time: prayer.ogle, isActive: next['name'] == 'Öğle', activeColor: AppTheme.teal),
+                      const SizedBox(width: 10),
+                      PrayerTimeChip(label: 'İkindi', time: prayer.ikindi, isActive: next['name'] == 'İkindi', activeColor: AppTheme.emerald),
+                      const SizedBox(width: 10),
+                      PrayerTimeChip(label: 'Akşam', time: prayer.aksam, isActive: next['name'] == 'Akşam', activeColor: AppTheme.sunsetPurple),
+                      const SizedBox(width: 10),
+                      PrayerTimeChip(label: 'Yatsı', time: prayer.yatsi, isActive: next['name'] == 'Yatsı', activeColor: AppTheme.nightBlue),
                     ],
                   ),
                 ),

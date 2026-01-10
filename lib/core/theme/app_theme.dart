@@ -19,6 +19,12 @@ class AppTheme {
   static const Color warmGray = Color(0xFF9E9E9E);
   static const Color softCream = Color(0xFFFFF8E1);
   static const Color nightBlue = Color(0xFF1A237E);
+  
+  // Premium Extended Palette
+  static const Color sunriseOrange = Color(0xFFFF6F00);
+  static const Color sunsetPurple = Color(0xFF6A1B9A);
+  static const Color midnightBlue = Color(0xFF0D1B2A);
+  static const Color dawnPurple = Color(0xFF4A148C);
 
   // Gradient for Headers
   static const LinearGradient headerGradient = LinearGradient(
@@ -32,6 +38,54 @@ class AppTheme {
     end: Alignment.bottomRight,
     colors: [Color(0xFFD4AF37), Color(0xFFF9A825)],
   );
+
+  // Premium Time-Based Gradients
+  static LinearGradient get fajrGradient => const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF1A237E), Color(0xFF311B92), Color(0xFF4A148C)],
+  );
+
+  static LinearGradient get sunriseGradient => const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFF6F00), Color(0xFFFFB300), Color(0xFFFFF176)],
+  );
+
+  static LinearGradient get dhuhrGradient => const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF00BCD4), Color(0xFF4DD0E1), Color(0xFFE0F7FA)],
+  );
+
+  static LinearGradient get asrGradient => const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF81C784)],
+  );
+
+  static LinearGradient get maghribGradient => const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFBF360C), Color(0xFFE65100), Color(0xFFFF8F00)],
+  );
+
+  static LinearGradient get ishaGradient => const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF0D1B2A), Color(0xFF1B1B3A), Color(0xFF1B5E20)],
+  );
+
+  /// Get gradient based on current prayer time
+  static LinearGradient getHeaderGradientByTime() {
+    final hour = DateTime.now().hour;
+    if (hour >= 4 && hour < 6) return fajrGradient;      // Fajr/İmsak
+    if (hour >= 6 && hour < 7) return sunriseGradient;   // Sunrise
+    if (hour >= 7 && hour < 13) return dhuhrGradient;    // Morning to Dhuhr
+    if (hour >= 13 && hour < 16) return asrGradient;     // Asr
+    if (hour >= 16 && hour < 19) return maghribGradient; // Maghrib
+    return ishaGradient;                                  // Isha/Night
+  }
 
   /// Get theme based on current time
   static ThemeData getThemeByTime() {
