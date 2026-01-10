@@ -592,27 +592,21 @@ class _FrostedGlassCard extends StatelessWidget {
                 ),
               ),
               
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               
-              // Prayer times row
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _PrayerTimeChip(label: 'İmsak', time: prayer.imsak, isActive: nextPrayer['name'] == 'İmsak'),
-                    const SizedBox(width: 8),
-                    _PrayerTimeChip(label: 'Güneş', time: prayer.gunes, isActive: nextPrayer['name'] == 'Güneş'),
-                    const SizedBox(width: 8),
-                    _PrayerTimeChip(label: 'Öğle', time: prayer.ogle, isActive: nextPrayer['name'] == 'Öğle'),
-                    const SizedBox(width: 8),
-                    _PrayerTimeChip(label: 'İkindi', time: prayer.ikindi, isActive: nextPrayer['name'] == 'İkindi'),
-                    const SizedBox(width: 8),
-                    _PrayerTimeChip(label: 'Akşam', time: prayer.aksam, isActive: nextPrayer['name'] == 'Akşam'),
-                    const SizedBox(width: 8),
-                    _PrayerTimeChip(label: 'Yatsı', time: prayer.yatsi, isActive: nextPrayer['name'] == 'Yatsı'),
-                  ],
-                ),
+              // Prayer times row - Dynamic/Responsive
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _PrayerTimeChip(label: 'İmsak', time: prayer.imsak, isActive: nextPrayer['name'] == 'İmsak'),
+                  _PrayerTimeChip(label: 'Güneş', time: prayer.gunes, isActive: nextPrayer['name'] == 'Güneş'),
+                  _PrayerTimeChip(label: 'Öğle', time: prayer.ogle, isActive: nextPrayer['name'] == 'Öğle'),
+                  _PrayerTimeChip(label: 'İkindi', time: prayer.ikindi, isActive: nextPrayer['name'] == 'İkindi'),
+                  _PrayerTimeChip(label: 'Akşam', time: prayer.aksam, isActive: nextPrayer['name'] == 'Akşam'),
+                  _PrayerTimeChip(label: 'Yatsı', time: prayer.yatsi, isActive: nextPrayer['name'] == 'Yatsı'),
+                ],
               ),
             ],
           ),
@@ -641,32 +635,33 @@ class _PrayerTimeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: isActive 
             ? AppTheme.primaryGreen 
             : Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: isActive
             ? null
             : Border.all(color: Colors.white.withValues(alpha: 0.3)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
             style: TextStyle(
               color: isActive ? Colors.white : Colors.white70,
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             time,
             style: TextStyle(
               color: isActive ? Colors.white : Colors.white,
-              fontSize: 13,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
           ),
