@@ -143,13 +143,12 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
           
           // ===== LAYER 4: UI CONTENT =====
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Row
-                  Row(
+            child: Column(
+              children: [
+                // Header Row (top aligned with padding)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
@@ -200,20 +199,31 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
                       ),
                     ],
                   ),
-                  
-                  const Spacer(),
-                  
-                  // ===== FROSTED GLASS CARD =====
-                  _FrostedGlassCard(
-                    prayer: prayer,
-                    nextPrayer: nextPrayer,
-                    countdown: _countdown,
+                ),
+                
+                const Spacer(),
+                
+                // ===== FROSTED GLASS CARD (CENTERED) =====
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: _FrostedGlassCard(
+                        prayer: prayer,
+                        nextPrayer: nextPrayer,
+                        countdown: _countdown,
+                      ),
+                    ),
                   ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Search Bar
-                  GestureDetector(
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: GestureDetector(
                     onTap: widget.onSearchTap,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -244,8 +254,8 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
