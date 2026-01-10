@@ -57,12 +57,19 @@ class _DashboardHeaderState extends State<DashboardHeader> {
             });
           }
         }
+      } else {
+        // Location is null - permission denied or location unavailable
+        if (mounted) {
+          setState(() {
+            _locationName = 'Konum izni gerekli';
+          });
+        }
       }
     } catch (e) {
       debugPrint('Geocoding error: $e');
       if (mounted) {
         setState(() {
-          _locationName = 'Konum alınamadı';
+          _locationName = 'Konum izni gerekli';
         });
       }
     }

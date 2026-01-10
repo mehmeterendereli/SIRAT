@@ -4,14 +4,12 @@ import 'package:injectable/injectable.dart';
 
 /// Real-Time Location Service
 /// Handles GPS coordination and permission management.
-/// Includes fallback for web platform and testing.
+/// NO MOCK DATA - returns null if location cannot be obtained.
 
 @lazySingleton
 class LocationService {
-  // Fallback coordinates (Istanbul, Turkey - default for testing)
-  static const double _defaultLatitude = 41.0082;
-  static const double _defaultLongitude = 28.9784;
-
+  /// Get current location - returns null if location cannot be obtained
+  /// NO FALLBACK COORDINATES - user must grant permission or select city manually
   Future<Position?> getCurrentLocation() async {
     try {
       // For web, use simpler approach with timeout
@@ -23,13 +21,27 @@ class LocationService {
       return await _getMobileLocation();
     } catch (e) {
       debugPrint('LocationService Error: $e');
-      // Return default position for testing
-      return _createFallbackPosition();
+      return null; // No fallback - return null
     }
   }
 
   Future<Position?> _getWebLocation() async {
     try {
+      // Check permission first
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          debugPrint('Web location permission denied');
+          return null;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('Web location permission denied forever');
+        return null;
+      }
+
       // Web-specific location handling with timeout
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -39,8 +51,8 @@ class LocationService {
       );
       return position;
     } catch (e) {
-      debugPrint('Web location failed: $e - Using fallback coordinates');
-      return _createFallbackPosition();
+      debugPrint('Web location failed: $e');
+      return null; // No fallback - return null
     }
   }
 
@@ -51,45 +63,48 @@ class LocationService {
     // Test if location services are enabled.
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      debugPrint('Location services disabled - Using fallback');
-      return _createFallbackPosition();
+      debugPrint('Location services disabled');
+      return null;
     }
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        debugPrint('Location permission denied - Using fallback');
-        return _createFallbackPosition();
+        debugPrint('Location permission denied');
+        return null;
       }
     }
     
     if (permission == LocationPermission.deniedForever) {
-      debugPrint('Location permission denied forever - Using fallback');
-      return _createFallbackPosition();
+      debugPrint('Location permission denied forever');
+      return null;
     } 
 
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
-    );
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to get mobile location: $e');
+      return null;
+    }
   }
 
-  /// Create fallback position for testing when location fails
-  Position _createFallbackPosition() {
-    return Position(
-      latitude: _defaultLatitude,
-      longitude: _defaultLongitude,
-      timestamp: DateTime.now(),
-      accuracy: 100.0,
-      altitude: 0.0,
-      altitudeAccuracy: 0.0,
-      heading: 0.0,
-      headingAccuracy: 0.0,
-      speed: 0.0,
-      speedAccuracy: 0.0,
-    );
+  /// Check if location permission is granted
+  Future<bool> hasPermission() async {
+    final permission = await Geolocator.checkPermission();
+    return permission == LocationPermission.always || 
+           permission == LocationPermission.whileInUse;
+  }
+
+  /// Request location permission
+  Future<bool> requestPermission() async {
+    final permission = await Geolocator.requestPermission();
+    return permission == LocationPermission.always || 
+           permission == LocationPermission.whileInUse;
   }
 
   Stream<Position> getPositionStream() {
