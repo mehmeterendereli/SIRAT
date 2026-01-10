@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../bloc/prayer_bloc.dart';
 import '../../domain/entities/prayer_time.dart';
 import 'premium_widgets.dart';
-import 'animated_sky.dart';
+import 'sky_scene/sky_scene_widget.dart';
 
 /// Next Prayer Card Component (REALLY Dynamic)
 /// Consumes PrayerBloc for real-time API data.
@@ -122,8 +122,9 @@ class _NextPrayerCardState extends State<NextPrayerCard> {
                 ),
               ],
             ),
-            child: PrayerCardSkyBackground(
+            child: SkySceneWidget(
               borderRadius: 24,
+              showSilhouette: false, // Compact mode - no silhouette
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
