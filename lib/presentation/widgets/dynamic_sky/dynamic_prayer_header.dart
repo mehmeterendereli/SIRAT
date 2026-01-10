@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/hijri_calendar.dart';
 import '../../../domain/entities/prayer_time.dart';
 import '../../bloc/prayer_bloc.dart';
 import 'sky_controller.dart';
@@ -231,6 +232,9 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 4),
+                            // Hicri Tarih
+                            _buildHijriDateRow(),
                           ],
                         ),
                       ),
@@ -346,6 +350,53 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
       child: CustomPaint(
         painter: MoonPainter(phaseData: phaseData),
       ),
+    );
+  }
+  
+  /// Hicri tarih satırı
+  Widget _buildHijriDateRow() {
+    final hijriDate = HijriCalendar.fromGregorian(_now);
+    final specialDay = IslamicSpecialDays.checkSpecialDay(hijriDate);
+    final isSpecial = specialDay != IslamicSpecialDay.none;
+    
+    return Row(
+      children: [
+        Icon(
+          Icons.nightlight_round,
+          size: 14,
+          color: isSpecial ? const Color(0xFFFFD700) : Colors.white70,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          hijriDate.format(),
+          style: TextStyle(
+            color: isSpecial ? const Color(0xFFFFD700) : Colors.white70,
+            fontSize: 12,
+            fontWeight: isSpecial ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        if (isSpecial) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+              ),
+            ),
+            child: Text(
+              IslamicSpecialDays.getSpecialDayName(specialDay),
+              style: const TextStyle(
+                color: Color(0xFFFFD700),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
   
