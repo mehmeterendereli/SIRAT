@@ -683,7 +683,7 @@ class _PrayerChip extends StatelessWidget {
 }
 
 // =============================================================================
-// MOON PAINTER - Gerçek Ay Fazı Çizici
+// MOON PAINTER - Gerçek Ay Fazı Çizici (Saydam Arka Plan)
 // =============================================================================
 
 class MoonPainter extends CustomPainter {
@@ -694,155 +694,206 @@ class MoonPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final radius = size.width / 2 - 2;
     
-    // Ay glow efekti
+    // Ay glow efekti (hafif)
     final glowPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.3)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-    canvas.drawCircle(center, radius + 5, glowPaint);
+      ..color = Colors.white.withValues(alpha: 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.drawCircle(center, radius + 3, glowPaint);
     
-    // Ay arka planı (karanlık kısım)
-    final darkPaint = Paint()
-      ..color = const Color(0xFF2A2A2A)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius, darkPaint);
-    
-    // Aydınlık kısım
-    final lightPaint = Paint()
-      ..color = const Color(0xFFF5F5F5)
-      ..style = PaintingStyle.fill;
-    
-    // Ay fazına göre aydınlık kısmı çiz
-    _drawMoonPhase(canvas, center, radius, lightPaint);
-    
-    // Ay yüzeyi detayları (kraterler)
-    _drawCraters(canvas, center, radius);
+    // Sadece aydınlık kısmı çiz (karanlık kısım saydam kalır)
+    _drawIlluminatedPortion(canvas, center, radius);
   }
   
-  void _drawMoonPhase(Canvas canvas, Offset center, double radius, Paint paint) {
+  void _drawIlluminatedPortion(Canvas canvas, Offset center, double radius) {
     final illumination = phaseData.illumination;
     final isWaxing = phaseData.isWaxing;
     
+    // Ay yüzeyi için gradient
+    final moonGradient = RadialGradient(
+      center: Alignment.center,
+      radius: 1.0,
+      colors: [
+        const Color(0xFFFFFFF0),  // Kremsi beyaz
+        const Color(0xFFE8E8E8),  // Açık gri
+        const Color(0xFFD0D0D0),  // Kenarlarda daha koyu
+      ],
+    );
+    
+    final moonPaint = Paint()
+      ..shader = moonGradient.createShader(
+        Rect.fromCircle(center: center, radius: radius),
+      )
+      ..style = PaintingStyle.fill;
+    
     if (illumination <= 0.01) {
-      // Yeni ay - çizme
+      // Yeni ay - sadece çok hafif outline
+      final outlinePaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.1)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1;
+      canvas.drawCircle(center, radius, outlinePaint);
       return;
     }
     
     if (illumination >= 0.99) {
       // Dolunay - tam daire
-      canvas.drawCircle(center, radius, paint);
+      canvas.drawCircle(center, radius, moonPaint);
+      _drawCraters(canvas, center, radius);
       return;
     }
     
-    // Hilal veya yarım ay çizimi
+    // Hilal veya gibbous fazı için path oluştur
+    canvas.save();
+    
+    // Clip region oluştur
+    final clipPath = _createMoonPhasePath(center, radius, illumination, isWaxing);
+    canvas.clipPath(clipPath);
+    
+    // Clipped bölgeye ay çiz
+    canvas.drawCircle(center, radius, moonPaint);
+    
+    // Kraterler
+    _drawCraters(canvas, center, radius);
+    
+    canvas.restore();
+  }
+  
+  Path _createMoonPhasePath(Offset center, double radius, double illumination, bool isWaxing) {
     final path = Path();
     
-    // Ay döngüsüne göre terminator pozisyonu
-    // terminator: aydınlık-karanlık sınırı
-    final terminatorOffset = (1 - illumination * 2).abs();
-    
     if (illumination <= 0.5) {
-      // Hilal fazı (ince)
+      // Hilal fazı (ince şerit)
+      // Aydınlık tarafın yarım dairesi
       if (isWaxing) {
-        // Sağ taraf aydınlık (büyüyen hilal)
-        path.addArc(
-          Rect.fromCircle(center: center, radius: radius),
-          -math.pi / 2,
-          math.pi,
+        // Sağ taraf aydınlık
+        path.moveTo(center.dx, center.dy - radius);
+        path.arcToPoint(
+          Offset(center.dx, center.dy + radius),
+          radius: Radius.circular(radius),
+          clockwise: true,
         );
         
-        // Terminator (karanlık-aydınlık sınırı)
-        final controlX = center.dx + radius * terminatorOffset;
+        // Terminator eğrisi (içe doğru)
+        final curveDepth = radius * (1 - illumination * 2);
         path.quadraticBezierTo(
-          controlX,
+          center.dx - curveDepth,
           center.dy,
           center.dx,
           center.dy - radius,
         );
       } else {
-        // Sol taraf aydınlık (küçülen hilal)
-        path.addArc(
-          Rect.fromCircle(center: center, radius: radius),
-          math.pi / 2,
-          math.pi,
+        // Sol taraf aydınlık
+        path.moveTo(center.dx, center.dy - radius);
+        path.arcToPoint(
+          Offset(center.dx, center.dy + radius),
+          radius: Radius.circular(radius),
+          clockwise: false,
         );
         
-        final controlX = center.dx - radius * terminatorOffset;
+        final curveDepth = radius * (1 - illumination * 2);
         path.quadraticBezierTo(
-          controlX,
+          center.dx + curveDepth,
           center.dy,
           center.dx,
           center.dy - radius,
         );
       }
     } else {
-      // Gibbous fazı (şişkin)
-      canvas.drawCircle(center, radius, paint);
+      // Gibbous fazı (şişkin - yarıdan fazla aydınlık)
+      final shadowDepth = radius * (2 - illumination * 2);
       
-      // Karanlık kısmı üzerine çiz
-      final darkOverlay = Paint()
-        ..color = const Color(0xFF2A2A2A)
-        ..style = PaintingStyle.fill;
-      
-      final overlayPath = Path();
       if (isWaxing) {
-        // Sol taraf karanlık
-        overlayPath.addArc(
-          Rect.fromCircle(center: center, radius: radius),
-          math.pi / 2,
-          math.pi,
+        // Sağ taraf tam, sol taraf kısmi
+        path.moveTo(center.dx, center.dy - radius);
+        path.arcToPoint(
+          Offset(center.dx, center.dy + radius),
+          radius: Radius.circular(radius),
+          clockwise: true,
         );
-        final controlX = center.dx - radius * (2 - illumination * 2);
-        overlayPath.quadraticBezierTo(
-          controlX,
+        path.arcToPoint(
+          Offset(center.dx, center.dy - radius),
+          radius: Radius.circular(radius),
+          clockwise: true,
+        );
+        
+        // Sol taraftan biraz çıkar
+        final cutPath = Path();
+        cutPath.moveTo(center.dx, center.dy - radius);
+        cutPath.quadraticBezierTo(
+          center.dx - shadowDepth,
           center.dy,
           center.dx,
-          center.dy - radius,
+          center.dy + radius,
         );
+        cutPath.lineTo(center.dx - radius - 10, center.dy + radius);
+        cutPath.lineTo(center.dx - radius - 10, center.dy - radius);
+        cutPath.close();
+        
+        // Path'ten çıkar
+        return Path.combine(PathOperation.difference, path, cutPath);
       } else {
-        // Sağ taraf karanlık
-        overlayPath.addArc(
-          Rect.fromCircle(center: center, radius: radius),
-          -math.pi / 2,
-          math.pi,
+        // Sol taraf tam, sağ taraf kısmi
+        path.moveTo(center.dx, center.dy - radius);
+        path.arcToPoint(
+          Offset(center.dx, center.dy + radius),
+          radius: Radius.circular(radius),
+          clockwise: false,
         );
-        final controlX = center.dx + radius * (2 - illumination * 2);
-        overlayPath.quadraticBezierTo(
-          controlX,
+        path.arcToPoint(
+          Offset(center.dx, center.dy - radius),
+          radius: Radius.circular(radius),
+          clockwise: false,
+        );
+        
+        final cutPath = Path();
+        cutPath.moveTo(center.dx, center.dy - radius);
+        cutPath.quadraticBezierTo(
+          center.dx + shadowDepth,
           center.dy,
           center.dx,
-          center.dy - radius,
+          center.dy + radius,
         );
+        cutPath.lineTo(center.dx + radius + 10, center.dy + radius);
+        cutPath.lineTo(center.dx + radius + 10, center.dy - radius);
+        cutPath.close();
+        
+        return Path.combine(PathOperation.difference, path, cutPath);
       }
-      canvas.drawPath(overlayPath, darkOverlay);
-      return;
     }
     
-    canvas.drawPath(path, paint);
+    path.close();
+    return path;
   }
   
   void _drawCraters(Canvas canvas, Offset center, double radius) {
-    // Sadece aydınlık kısımda görünen küçük kraterler
-    if (phaseData.illumination < 0.1) return;
+    if (phaseData.illumination < 0.15) return;
     
     final craterPaint = Paint()
-      ..color = const Color(0xFFE0E0E0)
+      ..color = const Color(0xFFCCCCCC).withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
     
-    // Birkaç sabit krater pozisyonu
-    final craters = [
-      Offset(center.dx + radius * 0.3, center.dy - radius * 0.2),
-      Offset(center.dx - radius * 0.2, center.dy + radius * 0.3),
-      Offset(center.dx + radius * 0.1, center.dy + radius * 0.1),
-    ];
-    
-    for (final crater in craters) {
-      canvas.drawCircle(crater, radius * 0.08, craterPaint);
-    }
+    // Küçük krater detayları
+    canvas.drawCircle(
+      Offset(center.dx + radius * 0.25, center.dy - radius * 0.15),
+      radius * 0.06,
+      craterPaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx - radius * 0.15, center.dy + radius * 0.25),
+      radius * 0.08,
+      craterPaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx + radius * 0.1, center.dy + radius * 0.35),
+      radius * 0.05,
+      craterPaint,
+    );
   }
   
   @override
   bool shouldRepaint(MoonPainter oldDelegate) => 
-      oldDelegate.phaseData.phase != phaseData.phase;
+      oldDelegate.phaseData.illumination != phaseData.illumination;
 }
+
