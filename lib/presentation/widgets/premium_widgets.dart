@@ -187,6 +187,54 @@ class _PulsingCountdownState extends State<PulsingCountdown>
 }
 
 // =============================================================================
+// SIMPLE COUNTDOWN (NO ANIMATION)
+// =============================================================================
+
+/// Simple countdown without animation - clean and classic style
+class SimpleCountdown extends StatelessWidget {
+  final String countdown;
+  final Color backgroundColor;
+  final Color textColor;
+  final double fontSize;
+
+  const SimpleCountdown({
+    super.key,
+    required this.countdown,
+    this.backgroundColor = Colors.white,
+    this.textColor = const Color(0xFF1B5E20),
+    this.fontSize = 32,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      decoration: BoxDecoration(
+        color: backgroundColor.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        countdown,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.bold,
+          fontSize: fontSize,
+          letterSpacing: 3,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
 // FLOATING BOTTOM NAV
 // =============================================================================
 

@@ -129,50 +129,53 @@ class _NextPrayerCardState extends State<NextPrayerCard> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
+                    // Prayer name row
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Sıradaki Vakit',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Sıradaki Vakit',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.8),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                next['name'],
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              next['name'],
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                            ],
-                          ),
-                        ),
-                        PulsingCountdown(
-                          countdown: _countdown,
-                          color: AppTheme.primaryGold,
-                          fontSize: 20,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        theme.dividerColor.withValues(alpha: 0.5),
-                        Colors.transparent,
-                      ],
+                    const SizedBox(height: 16),
+                    // Centered countdown - no animation
+                    SimpleCountdown(
+                      countdown: _countdown,
+                      backgroundColor: Colors.white,
+                      textColor: AppTheme.primaryGreen,
+                      fontSize: 28,
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 16),
+                    // Divider
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.white.withValues(alpha: 0.3),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     // Prayer time chips
                     SingleChildScrollView(

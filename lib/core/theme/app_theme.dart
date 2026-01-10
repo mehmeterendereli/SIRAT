@@ -76,15 +76,40 @@ class AppTheme {
     colors: [Color(0xFF0D1B2A), Color(0xFF1B1B3A), Color(0xFF1B5E20)],
   );
 
-  /// Get gradient based on current prayer time
+  /// Get gradient based on current time (synced with SkySceneWidget)
   static LinearGradient getHeaderGradientByTime() {
     final hour = DateTime.now().hour;
-    if (hour >= 4 && hour < 6) return fajrGradient;      // Fajr/İmsak
-    if (hour >= 6 && hour < 7) return sunriseGradient;   // Sunrise
-    if (hour >= 7 && hour < 13) return dhuhrGradient;    // Morning to Dhuhr
-    if (hour >= 13 && hour < 16) return asrGradient;     // Asr
-    if (hour >= 16 && hour < 19) return maghribGradient; // Maghrib
-    return ishaGradient;                                  // Isha/Night
+    final minute = DateTime.now().minute;
+    final timeValue = hour + (minute / 60.0);
+    
+    // Synced with SkySceneWidget time ranges
+    if (timeValue >= 21.0 || timeValue < 4.0) {
+      return ishaGradient;           // Night
+    } else if (timeValue >= 4.0 && timeValue < 5.5) {
+      return fajrGradient;           // Fajr
+    } else if (timeValue >= 5.5 && timeValue < 7.0) {
+      return sunriseGradient;        // Sunrise
+    } else if (timeValue >= 7.0 && timeValue < 12.0) {
+      return dhuhrGradient;          // Morning to Dhuhr
+    } else if (timeValue >= 12.0 && timeValue < 15.0) {
+      return dhuhrGradient;          // Noon
+    } else if (timeValue >= 15.0 && timeValue < 17.0) {
+      return asrGradient;            // Afternoon/Asr
+    } else if (timeValue >= 17.0 && timeValue < 19.0) {
+      // Sunset colors - purple + orange (matching sky scene)
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF5C6BC0), Color(0xFFE65100), Color(0xFFFF8F00)],
+      );
+    } else {
+      // Maghrib (19:00 - 21:00) - deep purple + deep orange
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF283593), Color(0xFFBF360C), Color(0xFFE65100)],
+      );
+    }
   }
 
   /// Get theme based on current time
