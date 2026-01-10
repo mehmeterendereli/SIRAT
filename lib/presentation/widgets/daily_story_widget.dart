@@ -83,43 +83,55 @@ class DailyStoryWidget extends StatelessWidget {
     );
   }
 
-  /// Placeholder while loading from Firestore
+  /// Placeholder while loading from Firestore - Shows static icons instead of spinners
   Widget _buildPlaceholder(BuildContext context) {
+    final placeholderItems = [
+      {'title': 'Yükleniyor...', 'icon': Icons.menu_book_rounded},
+      {'title': 'Yükleniyor...', 'icon': Icons.star_rounded},
+      {'title': 'Yükleniyor...', 'icon': Icons.favorite_rounded},
+      {'title': 'Yükleniyor...', 'icon': Icons.lightbulb_rounded},
+    ];
+    
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       scrollDirection: Axis.horizontal,
-      itemCount: 4,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey.shade200,
-              ),
-              child: const Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+      itemCount: placeholderItems.length,
+      itemBuilder: (context, index) {
+        final item = placeholderItems[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Column(
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey.shade300,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Icon(
+                    item['icon'] as IconData,
+                    color: Colors.grey.shade400,
+                    size: 30,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: 50,
-              height: 10,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(5),
+              const SizedBox(height: 8),
+              Text(
+                item['title'] as String,
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 

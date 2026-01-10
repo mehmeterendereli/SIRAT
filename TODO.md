@@ -185,8 +185,8 @@
 
 | # | Görev | Öncelik |
 |---|-------|---------|
-| 1 | Hızlı İşlemler kartlarını düzelt (icon + text + navigation) | 🔴 Yüksek |
-| 2 | Daily Story widgetı Firestore'a bağla veya statik içerik | 🔴 Yüksek |
+| 1 | ~~Hızlı İşlemler kartlarını düzelt (icon + text + navigation)~~ | ✅ Tamamlandı |
+| 2 | ~~Daily Story widgetı Firestore'a bağla veya statik içerik~~ | ✅ Tamamlandı |
 | 3 | Kuran modülü (QUR-001~004) | 🟡 Orta |
 | 4 | Hicri takvim entegrasyonu (PRT-007) | 🟡 Orta |
 | 5 | Çoklu dil desteği (AR, DE) | 🟢 Düşük |

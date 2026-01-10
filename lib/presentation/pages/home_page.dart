@@ -146,11 +146,11 @@ class _HomeContent extends StatelessWidget {
               _buildActionItem(context, loc.qiblaFinder, Icons.explore_rounded, Colors.orange, () {
                 _navigateToPage(context, const QiblaPage());
               }),
-              _buildActionItem(context, loc.readQuran, Icons.auto_stories_rounded, Colors.blue, () {
-                // TODO: Kuran sayfası
+              _buildActionItem(context, 'İslam AI', Icons.psychology_rounded, const Color(0xFF6A1B9A), () {
+                _navigateToPage(context, const IslamAIPage());
               }),
-              _buildActionItem(context, loc.findMosque, Icons.location_on_rounded, Colors.redAccent, () {
-                // TODO: Cami bulucu
+              _buildActionItem(context, loc.settings_title, Icons.settings_rounded, const Color(0xFF00796B), () {
+                _navigateToPage(context, const SettingsPage());
               }),
             ],
           ),

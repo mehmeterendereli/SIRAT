@@ -8,13 +8,16 @@ import '../../../domain/entities/prayer_time.dart';
 import '../../bloc/prayer_bloc.dart';
 import 'sky_controller.dart';
 
+/// =============================================================================
 /// DynamicPrayerHeader - Apple Weather Quality
+/// =============================================================================
 /// 
-/// 4-Layer Stack Architecture:
-/// - Layer 0: Animated Gradient Background (lerp based on time)
-/// - Layer 1: Celestial Bodies (Sun/Moon with arc movement)
-/// - Layer 2: Atmosphere (Clouds, Stars)
-/// - Layer 3: Frosted Glass UI Card
+/// Gerçek zamanlı gökyüzü animasyonu:
+/// - Güneş: sunrise → sunset arası yarı daire ark
+/// - Ay: yatsı → imsak arası yarı daire ark
+/// - Yıldızlar: Gece görünür, parıldama efekti
+/// - Bulutlar: Yavaş drift hareketi
+/// - Gradient: Vakit bazlı yumuşak geçişler
 
 class DynamicPrayerHeader extends StatefulWidget {
   final VoidCallback? onSearchTap;
@@ -31,29 +34,22 @@ class DynamicPrayerHeader extends StatefulWidget {
 }
 
 class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   Timer? _timer;
   String _countdown = '--:--:--';
   DateTime _now = DateTime.now();
   
-  // Animation controllers
-  late AnimationController _cloudController;
-  late AnimationController _starController;
+  // Animation controller for smooth effects
+  late AnimationController _animationController;
   
   @override
   void initState() {
     super.initState();
     _startTimers();
     
-    // Cloud drift animation (slow, continuous)
-    _cloudController = AnimationController(
-      duration: const Duration(seconds: 60),
-      vsync: this,
-    )..repeat();
-    
-    // Star twinkle animation
-    _starController = AnimationController(
-      duration: const Duration(seconds: 3),
+    // Single animation controller for all animated effects
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
   }
@@ -69,8 +65,7 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
   @override
   void dispose() {
     _timer?.cancel();
-    _cloudController.dispose();
-    _starController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -84,7 +79,7 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
         
         // Loading state
         return Container(
-          height: 380,
+          height: 420,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -104,48 +99,100 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
   }
   
   Widget _buildContent(BuildContext context, PrayerTime prayer, String locationName) {
-    // Controllers
-    final skyController = SkyColorController(prayerTime: prayer, currentTime: _now);
+    final skyController = SkyController(prayerTime: prayer, currentTime: _now);
+    final celestialCalculator = CelestialCalculator(prayerTime: prayer, currentTime: _now);
     final greeting = SmartGreeting(prayerTime: prayer, currentTime: _now);
-    final celestial = CelestialPosition(prayerTime: prayer, currentTime: _now);
     
     final skyGradient = skyController.getGradient();
-    final celestialData = celestial.calculate();
     final nextPrayer = _findNextPrayer(prayer);
     _countdown = _calculateCountdown(nextPrayer['time']);
     
-    return Container(
+    return SizedBox(
       height: 420,
       child: Stack(
         children: [
-          // ===== LAYER 0: GRADIENT BACKGROUND =====
-          _GradientBackground(gradient: skyGradient),
+          // ===== LAYER 0: SKY GRADIENT BACKGROUND =====
+          RepaintBoundary(
+            child: AnimatedContainer(
+              duration: const Duration(seconds: 30),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                gradient: skyGradient.toLinearGradient(),
+              ),
+            ),
+          ),
           
-          // ===== LAYER 1: STARS (Night only) =====
+          // ===== LAYER 1: STARS (Gece) =====
           if (skyGradient.starsOpacity > 0)
-            _StarsLayer(
-              opacity: skyGradient.starsOpacity,
-              animation: _starController,
+            RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: skyGradient.starsOpacity,
+                    child: CustomPaint(
+                      size: Size.infinite,
+                      painter: StarsPainter(
+                        animationValue: _animationController.value,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           
-          // ===== LAYER 2: CELESTIAL BODY =====
-          if (celestialData.isVisible)
-            _CelestialBody(
-              data: celestialData,
-              containerHeight: 280,
-            ),
+          // ===== LAYER 2: CELESTIAL BODIES =====
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final size = Size(constraints.maxWidth, 280);
+              final sunData = celestialCalculator.calculateSunPosition(size);
+              final moonData = celestialCalculator.calculateMoonPosition(size);
+              
+              return Stack(
+                children: [
+                  // Güneş
+                  if (sunData.isVisible)
+                    Positioned(
+                      left: sunData.position.dx - 30,
+                      top: sunData.position.dy - 30,
+                      child: _buildSun(),
+                    ),
+                  
+                  // Ay
+                  if (moonData.isVisible)
+                    Positioned(
+                      left: moonData.position.dx - 25,
+                      top: moonData.position.dy - 25,
+                      child: _buildMoon(),
+                    ),
+                ],
+              );
+            },
+          ),
           
           // ===== LAYER 3: CLOUDS =====
-          _CloudsLayer(
-            animation: _cloudController,
-            opacity: skyGradient.isNight ? 0.15 : 0.4,
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: skyGradient.isNight ? 0.15 : 0.4,
+                  child: CustomPaint(
+                    size: Size.infinite,
+                    painter: CloudsPainter(
+                      animationValue: _animationController.value,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
           
           // ===== LAYER 4: UI CONTENT =====
           SafeArea(
             child: Column(
               children: [
-                // Header Row (top aligned with padding)
+                // Header Row
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                   child: Row(
@@ -203,7 +250,7 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
                 
                 const Spacer(),
                 
-                // ===== FROSTED GLASS CARD (CENTERED) =====
+                // ===== FROSTED GLASS CARD =====
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Center(
@@ -263,6 +310,45 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
     );
   }
   
+  /// Güneş widget'ı
+  Widget _buildSun() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          colors: [
+            Color(0xFFFFF59D),  // Açık sarı merkez
+            Color(0xFFFFB74D),  // Turuncu
+            Color(0xFFFF8F00),  // Koyu turuncu
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.6),
+            blurRadius: 40,
+            spreadRadius: 15,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Ay widget'ı - Gerçek ay fazına göre çizim
+  Widget _buildMoon() {
+    final moonCalc = MoonPhaseCalculator(currentDate: _now);
+    final phaseData = moonCalc.getPhaseData();
+    
+    return SizedBox(
+      width: 50,
+      height: 50,
+      child: CustomPaint(
+        painter: MoonPainter(phaseData: phaseData),
+      ),
+    );
+  }
+  
   Map<String, dynamic> _findNextPrayer(PrayerTime prayer) {
     final now = _now;
     final times = [
@@ -311,200 +397,97 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
 }
 
 // =============================================================================
-// LAYER 0: GRADIENT BACKGROUND
+// STARS PAINTER
 // =============================================================================
 
-class _GradientBackground extends StatelessWidget {
-  final SkyGradient gradient;
+class StarsPainter extends CustomPainter {
+  final double animationValue;
   
-  const _GradientBackground({required this.gradient});
-  
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(seconds: 2),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        gradient: gradient.toLinearGradient(),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// LAYER 1: STARS
-// =============================================================================
-
-class _StarsLayer extends StatelessWidget {
-  final double opacity;
-  final AnimationController animation;
-  
-  const _StarsLayer({required this.opacity, required this.animation});
-  
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: opacity,
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _StarsPainter(twinkle: animation.value),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _StarsPainter extends CustomPainter {
-  final double twinkle;
-  final List<Offset> _stars = [];
-  final List<double> _sizes = [];
-  
-  _StarsPainter({required this.twinkle}) {
-    // Generate stars once (pseudo-random based on index)
-    final random = math.Random(42);
-    for (int i = 0; i < 100; i++) {
-      _stars.add(Offset(random.nextDouble(), random.nextDouble()));
-      _sizes.add(random.nextDouble() * 2 + 0.5);
-    }
-  }
+  StarsPainter({required this.animationValue});
   
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < _stars.length; i++) {
-      final star = _stars[i];
-      final starSize = _sizes[i];
-      final twinkleOffset = (i % 3 == 0) ? twinkle : (1 - twinkle);
+    for (int i = 0; i < cachedStars.length; i++) {
+      final star = cachedStars[i];
+      
+      // Her yıldız için farklı parıldama fazı
+      final phase = (animationValue + star.twinkleSpeed) % 1.0;
+      final twinkle = math.sin(phase * math.pi * 2) * 0.5 + 0.5;
       
       final paint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.3 + twinkleOffset * 0.7)
+        ..color = Colors.white.withValues(alpha: 0.3 + twinkle * 0.7)
         ..style = PaintingStyle.fill;
       
       canvas.drawCircle(
-        Offset(star.dx * size.width, star.dy * size.height * 0.6),
-        starSize * (0.8 + twinkleOffset * 0.4),
+        Offset(star.x * size.width, star.y * size.height),
+        star.size * (0.8 + twinkle * 0.4),
         paint,
       );
     }
   }
   
   @override
-  bool shouldRepaint(_StarsPainter oldDelegate) => oldDelegate.twinkle != twinkle;
+  bool shouldRepaint(StarsPainter oldDelegate) => 
+      oldDelegate.animationValue != animationValue;
 }
 
 // =============================================================================
-// LAYER 2: CELESTIAL BODY (Sun/Moon)
+// CLOUDS PAINTER
 // =============================================================================
 
-class _CelestialBody extends StatelessWidget {
-  final CelestialData data;
-  final double containerHeight;
+class CloudsPainter extends CustomPainter {
+  final double animationValue;
   
-  const _CelestialBody({
-    required this.data,
-    required this.containerHeight,
-  });
-  
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    
-    // Calculate position on arc
-    final x = 40 + (screenWidth - 80) * data.horizontalProgress;
-    final maxArcHeight = containerHeight * 0.5;
-    final y = containerHeight - 20 - (data.arcHeight * maxArcHeight);
-    
-    return Positioned(
-      left: x - 25,
-      top: y - 25,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: data.isSun
-              ? const RadialGradient(
-                  colors: [Color(0xFFFFF176), Color(0xFFFFB74D), Color(0xFFFF8F00)],
-                )
-              : const RadialGradient(
-                  colors: [Color(0xFFF5F5F5), Color(0xFFE0E0E0), Color(0xFFBDBDBD)],
-                ),
-          boxShadow: [
-            BoxShadow(
-              color: data.isSun
-                  ? Colors.orange.withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.3),
-              blurRadius: 30,
-              spreadRadius: 10,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// LAYER 3: CLOUDS
-// =============================================================================
-
-class _CloudsLayer extends StatelessWidget {
-  final AnimationController animation;
-  final double opacity;
-  
-  const _CloudsLayer({required this.animation, required this.opacity});
-  
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: opacity,
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _CloudsPainter(offset: animation.value),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _CloudsPainter extends CustomPainter {
-  final double offset;
-  
-  _CloudsPainter({required this.offset});
+  CloudsPainter({required this.animationValue});
   
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     
-    // Draw simple cloud shapes
+    // Cloud 1 - Sol üst, sağa hareket
     _drawCloud(canvas, paint, 
-        Offset(size.width * (0.2 + offset * 0.1), size.height * 0.15), 40);
+      Offset(
+        size.width * (0.15 + animationValue * 0.1),
+        size.height * 0.15,
+      ),
+      50,
+    );
+    
+    // Cloud 2 - Orta, yavaş sola hareket
     _drawCloud(canvas, paint, 
-        Offset(size.width * (0.6 + offset * 0.05), size.height * 0.25), 30);
+      Offset(
+        size.width * (0.55 - animationValue * 0.05),
+        size.height * 0.22,
+      ),
+      35,
+    );
+    
+    // Cloud 3 - Sağ üst, sağa hareket
     _drawCloud(canvas, paint, 
-        Offset(size.width * (0.8 - offset * 0.08), size.height * 0.1), 35);
+      Offset(
+        size.width * (0.75 + animationValue * 0.08),
+        size.height * 0.1,
+      ),
+      40,
+    );
   }
   
-  void _drawCloud(Canvas canvas, Paint paint, Offset center, double size) {
-    // Simple cloud as overlapping circles
-    canvas.drawCircle(center, size, paint);
-    canvas.drawCircle(center + Offset(-size * 0.6, 0), size * 0.8, paint);
-    canvas.drawCircle(center + Offset(size * 0.6, 0), size * 0.8, paint);
-    canvas.drawCircle(center + Offset(-size * 0.3, -size * 0.3), size * 0.6, paint);
-    canvas.drawCircle(center + Offset(size * 0.3, -size * 0.3), size * 0.6, paint);
+  void _drawCloud(Canvas canvas, Paint paint, Offset center, double cloudSize) {
+    // Fluffy cloud shape with overlapping circles
+    canvas.drawCircle(center, cloudSize, paint);
+    canvas.drawCircle(center + Offset(-cloudSize * 0.6, 0), cloudSize * 0.8, paint);
+    canvas.drawCircle(center + Offset(cloudSize * 0.6, 0), cloudSize * 0.8, paint);
+    canvas.drawCircle(center + Offset(-cloudSize * 0.3, -cloudSize * 0.3), cloudSize * 0.7, paint);
+    canvas.drawCircle(center + Offset(cloudSize * 0.3, -cloudSize * 0.3), cloudSize * 0.7, paint);
+    canvas.drawCircle(center + Offset(0, -cloudSize * 0.2), cloudSize * 0.6, paint);
   }
   
   @override
-  bool shouldRepaint(_CloudsPainter oldDelegate) => oldDelegate.offset != offset;
+  bool shouldRepaint(CloudsPainter oldDelegate) => 
+      oldDelegate.animationValue != animationValue;
 }
 
 // =============================================================================
@@ -566,7 +549,7 @@ class _FrostedGlassCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               
-              // Countdown - Centered, Monospaced
+              // Countdown
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                 decoration: BoxDecoration(
@@ -594,17 +577,15 @@ class _FrostedGlassCard extends StatelessWidget {
               
               const SizedBox(height: 12),
               
-              // Prayer times row - Responsive/Scalable
+              // Prayer times row
               LayoutBuilder(
                 builder: (context, constraints) {
-                  // Ekran genişliğine göre chip boyutunu hesapla
                   final availableWidth = constraints.maxWidth;
-                  final chipCount = 6;
-                  final spacing = 6.0;
-                  final totalSpacing = spacing * (chipCount - 1);
+                  const chipCount = 6;
+                  const spacing = 6.0;
+                  const totalSpacing = spacing * (chipCount - 1);
                   final chipWidth = (availableWidth - totalSpacing) / chipCount;
                   
-                  // Font boyutlarını chip genişliğine göre ayarla
                   final labelFontSize = (chipWidth * 0.18).clamp(9.0, 12.0);
                   final timeFontSize = (chipWidth * 0.24).clamp(11.0, 15.0);
                   final verticalPadding = (chipWidth * 0.12).clamp(6.0, 10.0);
@@ -612,65 +593,17 @@ class _FrostedGlassCard extends StatelessWidget {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _ResponsivePrayerChip(
-                        label: 'İmsak', 
-                        time: prayer.imsak, 
-                        isActive: nextPrayer['name'] == 'İmsak',
-                        width: chipWidth,
-                        labelFontSize: labelFontSize,
-                        timeFontSize: timeFontSize,
-                        verticalPadding: verticalPadding,
-                      ),
-                      SizedBox(width: spacing),
-                      _ResponsivePrayerChip(
-                        label: 'Güneş', 
-                        time: prayer.gunes, 
-                        isActive: nextPrayer['name'] == 'Güneş',
-                        width: chipWidth,
-                        labelFontSize: labelFontSize,
-                        timeFontSize: timeFontSize,
-                        verticalPadding: verticalPadding,
-                      ),
-                      SizedBox(width: spacing),
-                      _ResponsivePrayerChip(
-                        label: 'Öğle', 
-                        time: prayer.ogle, 
-                        isActive: nextPrayer['name'] == 'Öğle',
-                        width: chipWidth,
-                        labelFontSize: labelFontSize,
-                        timeFontSize: timeFontSize,
-                        verticalPadding: verticalPadding,
-                      ),
-                      SizedBox(width: spacing),
-                      _ResponsivePrayerChip(
-                        label: 'İkindi', 
-                        time: prayer.ikindi, 
-                        isActive: nextPrayer['name'] == 'İkindi',
-                        width: chipWidth,
-                        labelFontSize: labelFontSize,
-                        timeFontSize: timeFontSize,
-                        verticalPadding: verticalPadding,
-                      ),
-                      SizedBox(width: spacing),
-                      _ResponsivePrayerChip(
-                        label: 'Akşam', 
-                        time: prayer.aksam, 
-                        isActive: nextPrayer['name'] == 'Akşam',
-                        width: chipWidth,
-                        labelFontSize: labelFontSize,
-                        timeFontSize: timeFontSize,
-                        verticalPadding: verticalPadding,
-                      ),
-                      SizedBox(width: spacing),
-                      _ResponsivePrayerChip(
-                        label: 'Yatsı', 
-                        time: prayer.yatsi, 
-                        isActive: nextPrayer['name'] == 'Yatsı',
-                        width: chipWidth,
-                        labelFontSize: labelFontSize,
-                        timeFontSize: timeFontSize,
-                        verticalPadding: verticalPadding,
-                      ),
+                      _PrayerChip(label: 'İmsak', time: prayer.imsak, isActive: nextPrayer['name'] == 'İmsak', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
+                      const SizedBox(width: spacing),
+                      _PrayerChip(label: 'Güneş', time: prayer.gunes, isActive: nextPrayer['name'] == 'Güneş', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
+                      const SizedBox(width: spacing),
+                      _PrayerChip(label: 'Öğle', time: prayer.ogle, isActive: nextPrayer['name'] == 'Öğle', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
+                      const SizedBox(width: spacing),
+                      _PrayerChip(label: 'İkindi', time: prayer.ikindi, isActive: nextPrayer['name'] == 'İkindi', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
+                      const SizedBox(width: spacing),
+                      _PrayerChip(label: 'Akşam', time: prayer.aksam, isActive: nextPrayer['name'] == 'Akşam', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
+                      const SizedBox(width: spacing),
+                      _PrayerChip(label: 'Yatsı', time: prayer.yatsi, isActive: nextPrayer['name'] == 'Yatsı', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
                     ],
                   );
                 },
@@ -684,10 +617,10 @@ class _FrostedGlassCard extends StatelessWidget {
 }
 
 // =============================================================================
-// RESPONSIVE PRAYER TIME CHIP
+// PRAYER CHIP
 // =============================================================================
 
-class _ResponsivePrayerChip extends StatelessWidget {
+class _PrayerChip extends StatelessWidget {
   final String label;
   final String time;
   final bool isActive;
@@ -696,7 +629,7 @@ class _ResponsivePrayerChip extends StatelessWidget {
   final double timeFontSize;
   final double verticalPadding;
   
-  const _ResponsivePrayerChip({
+  const _PrayerChip({
     required this.label,
     required this.time,
     required this.isActive,
@@ -749,3 +682,167 @@ class _ResponsivePrayerChip extends StatelessWidget {
   }
 }
 
+// =============================================================================
+// MOON PAINTER - Gerçek Ay Fazı Çizici
+// =============================================================================
+
+class MoonPainter extends CustomPainter {
+  final MoonPhaseData phaseData;
+  
+  MoonPainter({required this.phaseData});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    
+    // Ay glow efekti
+    final glowPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.3)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+    canvas.drawCircle(center, radius + 5, glowPaint);
+    
+    // Ay arka planı (karanlık kısım)
+    final darkPaint = Paint()
+      ..color = const Color(0xFF2A2A2A)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius, darkPaint);
+    
+    // Aydınlık kısım
+    final lightPaint = Paint()
+      ..color = const Color(0xFFF5F5F5)
+      ..style = PaintingStyle.fill;
+    
+    // Ay fazına göre aydınlık kısmı çiz
+    _drawMoonPhase(canvas, center, radius, lightPaint);
+    
+    // Ay yüzeyi detayları (kraterler)
+    _drawCraters(canvas, center, radius);
+  }
+  
+  void _drawMoonPhase(Canvas canvas, Offset center, double radius, Paint paint) {
+    final illumination = phaseData.illumination;
+    final isWaxing = phaseData.isWaxing;
+    
+    if (illumination <= 0.01) {
+      // Yeni ay - çizme
+      return;
+    }
+    
+    if (illumination >= 0.99) {
+      // Dolunay - tam daire
+      canvas.drawCircle(center, radius, paint);
+      return;
+    }
+    
+    // Hilal veya yarım ay çizimi
+    final path = Path();
+    
+    // Ay döngüsüne göre terminator pozisyonu
+    // terminator: aydınlık-karanlık sınırı
+    final terminatorOffset = (1 - illumination * 2).abs();
+    
+    if (illumination <= 0.5) {
+      // Hilal fazı (ince)
+      if (isWaxing) {
+        // Sağ taraf aydınlık (büyüyen hilal)
+        path.addArc(
+          Rect.fromCircle(center: center, radius: radius),
+          -math.pi / 2,
+          math.pi,
+        );
+        
+        // Terminator (karanlık-aydınlık sınırı)
+        final controlX = center.dx + radius * terminatorOffset;
+        path.quadraticBezierTo(
+          controlX,
+          center.dy,
+          center.dx,
+          center.dy - radius,
+        );
+      } else {
+        // Sol taraf aydınlık (küçülen hilal)
+        path.addArc(
+          Rect.fromCircle(center: center, radius: radius),
+          math.pi / 2,
+          math.pi,
+        );
+        
+        final controlX = center.dx - radius * terminatorOffset;
+        path.quadraticBezierTo(
+          controlX,
+          center.dy,
+          center.dx,
+          center.dy - radius,
+        );
+      }
+    } else {
+      // Gibbous fazı (şişkin)
+      canvas.drawCircle(center, radius, paint);
+      
+      // Karanlık kısmı üzerine çiz
+      final darkOverlay = Paint()
+        ..color = const Color(0xFF2A2A2A)
+        ..style = PaintingStyle.fill;
+      
+      final overlayPath = Path();
+      if (isWaxing) {
+        // Sol taraf karanlık
+        overlayPath.addArc(
+          Rect.fromCircle(center: center, radius: radius),
+          math.pi / 2,
+          math.pi,
+        );
+        final controlX = center.dx - radius * (2 - illumination * 2);
+        overlayPath.quadraticBezierTo(
+          controlX,
+          center.dy,
+          center.dx,
+          center.dy - radius,
+        );
+      } else {
+        // Sağ taraf karanlık
+        overlayPath.addArc(
+          Rect.fromCircle(center: center, radius: radius),
+          -math.pi / 2,
+          math.pi,
+        );
+        final controlX = center.dx + radius * (2 - illumination * 2);
+        overlayPath.quadraticBezierTo(
+          controlX,
+          center.dy,
+          center.dx,
+          center.dy - radius,
+        );
+      }
+      canvas.drawPath(overlayPath, darkOverlay);
+      return;
+    }
+    
+    canvas.drawPath(path, paint);
+  }
+  
+  void _drawCraters(Canvas canvas, Offset center, double radius) {
+    // Sadece aydınlık kısımda görünen küçük kraterler
+    if (phaseData.illumination < 0.1) return;
+    
+    final craterPaint = Paint()
+      ..color = const Color(0xFFE0E0E0)
+      ..style = PaintingStyle.fill;
+    
+    // Birkaç sabit krater pozisyonu
+    final craters = [
+      Offset(center.dx + radius * 0.3, center.dy - radius * 0.2),
+      Offset(center.dx - radius * 0.2, center.dy + radius * 0.3),
+      Offset(center.dx + radius * 0.1, center.dy + radius * 0.1),
+    ];
+    
+    for (final crater in craters) {
+      canvas.drawCircle(crater, radius * 0.08, craterPaint);
+    }
+  }
+  
+  @override
+  bool shouldRepaint(MoonPainter oldDelegate) => 
+      oldDelegate.phaseData.phase != phaseData.phase;
+}
