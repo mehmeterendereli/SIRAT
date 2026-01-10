@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:aurora_background/aurora_background.dart';
 
 /// Ultra Professional Sky Scene Widget for SIRAT
 /// 6-Layer Architecture for Apple/Weather App Quality
@@ -219,29 +218,125 @@ class _GradientSkyLayer extends StatelessWidget {
 }
 
 // =============================================================================
-// LAYER 2: STARS (using aurora_background)
+// LAYER 2: STARS (Custom Implementation - More Realistic)
 // =============================================================================
 
-class _StarsLayer extends StatelessWidget {
+class _StarsLayer extends StatefulWidget {
   const _StarsLayer();
+
+  @override
+  State<_StarsLayer> createState() => _StarsLayerState();
+}
+
+class _StarsLayerState extends State<_StarsLayer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late List<_Star> _stars;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 5),
+      vsync: this,
+    )..repeat();
+
+    // Generate 80 random stars
+    final random = math.Random(42);
+    _stars = List.generate(80, (index) {
+      return _Star(
+        x: random.nextDouble(),
+        y: random.nextDouble() * 0.7, // Top 70% only
+        size: random.nextDouble() * 2.5 + 0.5,
+        twinkleOffset: random.nextDouble() * math.pi * 2,
+        twinkleSpeed: random.nextDouble() * 1.5 + 0.5,
+        brightness: random.nextDouble() * 0.4 + 0.6,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: IgnorePointer(
-        child: AuroraBackground(
-          numberOfWaves: 0, // Only stars, no aurora
-          backgroundColors: const [Colors.transparent, Colors.transparent],
-          starFieldConfig: const StarFieldConfig(
-            starCount: 100,
-            maxStarSize: 2.5,
-            starColor: Colors.white,
-          ),
-          child: const SizedBox.expand(),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: _StarsPainter(
+                stars: _stars,
+                animationValue: _controller.value,
+              ),
+              size: Size.infinite,
+            );
+          },
         ),
       ),
     );
   }
+}
+
+class _Star {
+  final double x;
+  final double y;
+  final double size;
+  final double twinkleOffset;
+  final double twinkleSpeed;
+  final double brightness;
+
+  _Star({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.twinkleOffset,
+    required this.twinkleSpeed,
+    required this.brightness,
+  });
+}
+
+class _StarsPainter extends CustomPainter {
+  final List<_Star> stars;
+  final double animationValue;
+
+  _StarsPainter({required this.stars, required this.animationValue});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final star in stars) {
+      // Calculate twinkle using sine wave
+      final twinkle = (math.sin(
+                animationValue * 2 * math.pi * star.twinkleSpeed +
+                    star.twinkleOffset) +
+            1) /
+          2;
+      final alpha = (star.brightness * 0.4 + twinkle * 0.6).clamp(0.0, 1.0);
+
+      final paint = Paint()
+        ..color = Colors.white.withValues(alpha: alpha)
+        ..style = PaintingStyle.fill;
+
+      final center = Offset(star.x * size.width, star.y * size.height);
+
+      // Draw outer glow
+      final glowPaint = Paint()
+        ..color = Colors.white.withValues(alpha: alpha * 0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawCircle(center, star.size * 2, glowPaint);
+
+      // Draw star core
+      canvas.drawCircle(center, star.size, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StarsPainter oldDelegate) =>
+      oldDelegate.animationValue != animationValue;
 }
 
 // =============================================================================

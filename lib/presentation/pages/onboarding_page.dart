@@ -72,15 +72,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
       });
       
       if (status.isGranted) {
-        // Initialize location service
-        await getIt<LocationService>().getCurrentLocation();
-        getIt<AnalyticsService>().logEvent(name: 'location_permission_granted');
+        // Initialize location service with timeout for web
+        try {
+          await getIt<LocationService>()
+              .getCurrentLocation()
+              .timeout(const Duration(seconds: 5));
+          getIt<AnalyticsService>().logEvent(name: 'location_permission_granted');
+        } catch (e) {
+          // Location fetch failed but we continue - fallback will be used
+          debugPrint('Location fetch failed: $e - Using fallback coordinates');
+        }
       } else {
         getIt<AnalyticsService>().logEvent(name: 'location_permission_denied');
       }
       
       _nextPage();
     } catch (e) {
+      debugPrint('Location permission error: $e');
       setState(() => _isRequestingPermission = false);
       _nextPage();
     }
@@ -278,9 +286,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
             child: const Icon(Icons.location_on_rounded, size: 60, color: Colors.orange),
           ),
           const SizedBox(height: 32),
-          if (_locationGranted)
-            _buildPermissionGrantedBadge('Konum izni verildi')
-          else
+          if (_locationGranted) ...[
+            _buildPermissionGrantedBadge('Konum izni verildi'),
+            const SizedBox(height: 24),
+            // Continue button after permission granted
+            ElevatedButton.icon(
+              onPressed: _nextPage,
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text('Devam Et'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ] else
             Column(
               children: [
                 ElevatedButton.icon(
