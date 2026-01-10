@@ -195,20 +195,14 @@ class _NextPrayerCardState extends State<NextPrayerCard> {
 
   Map<String, dynamic> _findNextPrayer(PrayerTime prayer) {
     final now = DateTime.now();
-    
-    // Helper to parse "HH:mm" from entity
-    DateTime _parse(String timeStr) {
-      final parts = timeStr.split(':');
-      return DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
-    }
 
     final times = {
-      'İmsak': _parse(prayer.imsak),
-      'Güneş': _parse(prayer.gunes),
-      'Öğle': _parse(prayer.ogle),
-      'İkindi': _parse(prayer.ikindi),
-      'Akşam': _parse(prayer.aksam),
-      'Yatsı': _parse(prayer.yatsi),
+      'İmsak': _parseTimeToday(prayer.imsak, now),
+      'Güneş': _parseTimeToday(prayer.gunes, now),
+      'Öğle': _parseTimeToday(prayer.ogle, now),
+      'İkindi': _parseTimeToday(prayer.ikindi, now),
+      'Akşam': _parseTimeToday(prayer.aksam, now),
+      'Yatsı': _parseTimeToday(prayer.yatsi, now),
     };
 
     for (var entry in times.entries) {
@@ -217,7 +211,13 @@ class _NextPrayerCardState extends State<NextPrayerCard> {
       }
     }
 
-    return {'name': 'İmsak', 'time': _parse(prayer.imsak).add(const Duration(days: 1))};
+    return {'name': 'İmsak', 'time': _parseTimeToday(prayer.imsak, now).add(const Duration(days: 1))};
+  }
+
+  /// Parse time string "HH:mm" to DateTime for today
+  DateTime _parseTimeToday(String timeStr, DateTime now) {
+    final parts = timeStr.split(':');
+    return DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
   }
 
   Widget _buildPrayerTimeItem(BuildContext context, String label, String timeStr, bool isActive) {

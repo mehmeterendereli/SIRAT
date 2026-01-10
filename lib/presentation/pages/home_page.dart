@@ -26,10 +26,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentNavIndex = 0;
 
-  final List<Widget> _pages = [
-    const _HomeContent(),
+  void _goToAIPage() {
+    setState(() => _currentNavIndex = 2); // İslam-AI index
+  }
+
+  List<Widget> get _pages => [
+    _HomeContent(onSearchTap: _goToAIPage),
     const QiblaPage(),
-    const IslamAIPage(), // Vakitler olarak AI kullanıyoruz şimdilik
+    const IslamAIPage(),
     const SettingsPage(),
   ];
 
@@ -81,7 +85,9 @@ class _HomePageState extends State<HomePage> {
 
 /// Home Content - Ana sayfa içeriği
 class _HomeContent extends StatelessWidget {
-  const _HomeContent();
+  final VoidCallback? onSearchTap;
+  
+  const _HomeContent({this.onSearchTap});
 
   void _navigateToPage(BuildContext context, Widget page) {
     Navigator.of(context).push(
@@ -94,8 +100,8 @@ class _HomeContent extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // 1. Dynamic Header
-          const DashboardHeader(),
+          // 1. Dynamic Header with search tap
+          DashboardHeader(onSearchTap: onSearchTap),
           
           // 2. Daily Stories
           const SizedBox(height: 24),

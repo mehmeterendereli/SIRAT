@@ -3,12 +3,16 @@ import 'package:geocoding/geocoding.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/injection.dart';
 import '../../core/services/location_service.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Dashboard Header Component
 /// Displays time-based greeting with DYNAMIC location from GPS.
+/// [onSearchTap] - Callback when search bar is tapped (navigates to AI page).
 
 class DashboardHeader extends StatefulWidget {
-  const DashboardHeader({super.key});
+  final VoidCallback? onSearchTap;
+  
+  const DashboardHeader({super.key, this.onSearchTap});
 
   @override
   State<DashboardHeader> createState() => _DashboardHeaderState();
@@ -16,6 +20,9 @@ class DashboardHeader extends StatefulWidget {
 
 class _DashboardHeaderState extends State<DashboardHeader> {
   String _locationName = 'Konum alınıyor...';
+  
+  // Getter for callback
+  VoidCallback? get onSearchTap => widget.onSearchTap;
   
   @override
   void initState() {
@@ -64,7 +71,24 @@ class _DashboardHeaderState extends State<DashboardHeader> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final greeting = TimeBasedGreeting.getGreeting();
+    final loc = AppLocalizations.of(context)!;
+    final greetingKey = TimeBasedGreeting.getGreetingKey();
+    
+    // Get localized greeting based on time
+    String greeting;
+    switch (greetingKey) {
+      case 'greeting_morning':
+        greeting = loc.greeting_morning;
+        break;
+      case 'greeting_afternoon':
+        greeting = loc.greeting_afternoon;
+        break;
+      case 'greeting_evening':
+        greeting = loc.greeting_evening;
+        break;
+      default:
+        greeting = loc.greeting_night;
+    }
     
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
@@ -134,32 +158,31 @@ class _DashboardHeaderState extends State<DashboardHeader> {
           ),
           const SizedBox(height: 24),
           // Search Bar (AI Quick Access)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.search, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Bugün kafana takılan bir soru var mı?',
-                      hintStyle: TextStyle(
+          GestureDetector(
+            onTap: onSearchTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: theme.colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      loc.ai_placeholder,
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Colors.grey,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                ),
-                Icon(Icons.mic_none_rounded, color: theme.colorScheme.primary),
-              ],
+                  Icon(Icons.mic_none_rounded, color: theme.colorScheme.primary),
+                ],
+              ),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/injection.dart';
 import '../../core/services/notification_service.dart';
@@ -29,13 +30,31 @@ class _SettingsPageState extends State<SettingsPage> {
   }
   
   Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
     final sound = await _notificationService.getPreferredSound();
     final preAlarm = await _notificationService.getPreAlarmMinutes();
     
     setState(() {
       _selectedSound = sound;
       _preAlarmMinutes = preAlarm;
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+      _preAlarmEnabled = prefs.getBool('pre_alarm_enabled') ?? true;
     });
+  }
+  
+  Future<void> _saveNotificationsEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+    setState(() => _notificationsEnabled = value);
+    if (!value) {
+      _notificationService.cancelAll();
+    }
+  }
+  
+  Future<void> _savePreAlarmEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('pre_alarm_enabled', value);
+    setState(() => _preAlarmEnabled = value);
   }
   
   Future<void> _saveSound(AzanSound sound) async {
@@ -67,18 +86,13 @@ class _SettingsPageState extends State<SettingsPage> {
             title: 'Namaz Vakti Bildirimleri',
             subtitle: 'Ezan vakti geldiğinde bildirim al',
             value: _notificationsEnabled,
-            onChanged: (value) {
-              setState(() => _notificationsEnabled = value);
-              if (!value) {
-                _notificationService.cancelAll();
-              }
-            },
+            onChanged: _saveNotificationsEnabled,
           ),
           _buildSwitchTile(
             title: 'Vakit Hatırlatıcısı',
             subtitle: 'Namaz vaktinden önce uyar',
             value: _preAlarmEnabled,
-            onChanged: (value) => setState(() => _preAlarmEnabled = value),
+            onChanged: _savePreAlarmEnabled,
           ),
           if (_preAlarmEnabled) _buildPreAlarmSelector(),
           
