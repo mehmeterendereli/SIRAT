@@ -89,7 +89,7 @@
 - [x] **PRT-004**: Akıllı erteleme ("10 dk sonra hatırlat") ✅
 - [x] **PRT-005**: Pre-alarm (Temkin vakti, iftara 15dk kala) ✅
 - [x] **PRT-006**: Ezan ses kütüphanesi (Mekke, İstanbul, Ney) ✅
-- [ ] **PRT-007**: Hicri takvim entegrasyonu
+- [x] **PRT-007**: Hicri takvim entegrasyonu ✅
 - [ ] **PRT-008**: Kandil günü otomatik bildirim
 
 ### 3.2 VR/AR Kıble (Kamera Modu)

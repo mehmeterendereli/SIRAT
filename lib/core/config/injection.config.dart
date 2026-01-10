@@ -20,6 +20,7 @@ import '../../presentation/bloc/location_bloc.dart' as _i678;
 import '../../presentation/bloc/prayer_bloc.dart' as _i232;
 import '../network/dio_client.dart' as _i667;
 import '../services/analytics_service.dart' as _i222;
+import '../services/chat_history_repository.dart' as _i474;
 import '../services/daily_content_service.dart' as _i1004;
 import '../services/geocoding_service.dart' as _i980;
 import '../services/islam_ai_service.dart' as _i150;
@@ -55,8 +56,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i255.ZikirmatikService>(() => _i255.ZikirmatikService());
     gh.lazySingleton<_i645.UserPreferencesRepository>(
         () => _i645.UserPreferencesRepository());
+    gh.lazySingleton<_i474.ChatHistoryRepository>(
+        () => _i474.ChatHistoryRepository());
     gh.lazySingleton<_i471.IPrayerRepository>(
         () => _i240.PrayerRepositoryImpl(gh<_i667.DioClient>()));
+    gh.factory<_i851.IslamAIBloc>(() => _i851.IslamAIBloc(
+          gh<_i150.IslamAIService>(),
+          gh<_i474.ChatHistoryRepository>(),
+        ));
     gh.lazySingleton<_i130.GetPrayerTimes>(
         () => _i130.GetPrayerTimes(gh<_i471.IPrayerRepository>()));
     gh.factory<_i678.LocationBloc>(() => _i678.LocationBloc(
@@ -69,8 +76,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i980.GeocodingService>(),
           gh<_i645.UserPreferencesRepository>(),
         ));
-    gh.factory<_i851.IslamAIBloc>(
-        () => _i851.IslamAIBloc(gh<_i150.IslamAIService>()));
     return this;
   }
 }
