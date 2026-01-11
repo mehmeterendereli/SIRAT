@@ -46,6 +46,8 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i667.DioClient>(() => _i667.DioClient());
     gh.lazySingleton<_i222.AnalyticsService>(() => _i222.AnalyticsService());
+    gh.lazySingleton<_i207.AudioDownloadService>(
+        () => _i207.AudioDownloadService());
     gh.lazySingleton<_i474.ChatHistoryRepository>(
         () => _i474.ChatHistoryRepository());
     gh.lazySingleton<_i1004.DailyContentService>(
@@ -62,8 +64,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i255.ZikirmatikService>(() => _i255.ZikirmatikService());
     gh.lazySingleton<_i645.UserPreferencesRepository>(
         () => _i645.UserPreferencesRepository());
-    gh.lazySingleton<_i207.AudioDownloadService>(
-        () => _i207.AudioDownloadService());
     gh.lazySingleton<_i471.IPrayerRepository>(
         () => _i240.PrayerRepositoryImpl(gh<_i667.DioClient>()));
     gh.factory<_i851.IslamAIBloc>(() => _i851.IslamAIBloc(

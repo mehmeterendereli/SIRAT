@@ -116,7 +116,7 @@
 - [x] **QUR-002**: Semantik arama ("Miras ile ilgili ayetler") ✅
 - [x] **QUR-003**: Sure/Sayfa bookmark sistemi ✅
 - [x] **QUR-004**: Hatim takibi ✅
-- [ ] **QUR-005**: Offline Audio (İndirme/Silme/Wi-Fi Limiti)
+- [x] **QUR-005**: Offline Audio (İndirme/Silme/Wi-Fi Limiti) ✅
 
 ### 3.6 Cami Bulucu
 - [ ] **MOS-001**: Google Maps SDK entegrasyonu

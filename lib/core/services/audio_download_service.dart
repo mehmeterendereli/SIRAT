@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -30,6 +31,11 @@ class AudioDownloadService {
     required List<Ayah> ayahs,
     Function(double)? onProgress,
   }) async {
+    // Web'de indirme desteklenmiyor
+    if (kIsWeb) {
+      throw Exception('Web platformunda çevrimdışı indirme desteklenmemektedir.');
+    }
+
     // 1. Wi-Fi kontrolü
     if (await _shouldRestrictDownload()) {
       throw Exception('Sadece Wi-Fi ile indirme açık ve şu an Wi-Fi bağlı değil.');
@@ -47,7 +53,7 @@ class AudioDownloadService {
     int totalAyahs = ayahs.where((a) => a.audioUrl != null).length;
 
     try {
-      // 3. Ayetleri indir (Batch processing could be added for speed)
+      // 3. Ayetleri indir
       for (var ayah in ayahs) {
         if (_cancelTokens[surahId]?.isCancelled ?? false) break;
         if (ayah.audioUrl == null) continue;
@@ -72,7 +78,7 @@ class AudioDownloadService {
         _updateProgress(surahId, downloadedCount, totalAyahs, onProgress);
       }
     } catch (e) {
-      // Hata durumunda temizlik yapılabilir veya kalınan yerden devam mekanizması
+      // Hata durumunda temizlik yapılabilir
       rethrow;
     } finally {
       _cancelTokens.remove(surahId);
@@ -88,6 +94,7 @@ class AudioDownloadService {
 
   /// İndirmeyi iptal et
   void cancelDownload(int surahId) {
+    if (kIsWeb) return;
     _cancelTokens[surahId]?.cancel();
     _cancelTokens.remove(surahId);
     _downloadProgress.remove(surahId);
@@ -95,6 +102,7 @@ class AudioDownloadService {
 
   /// İndirilmiş sureyi sil
   Future<void> deleteSurah(int surahId) async {
+    if (kIsWeb) return;
     final dir = await getApplicationDocumentsDirectory();
     final surahDir = Directory('${dir.path}/quran_audio/$surahId');
     if (await surahDir.exists()) {
@@ -102,28 +110,39 @@ class AudioDownloadService {
     }
   }
 
-  /// Sure indirilmiş mi kontrol et (Basit kontrol: Klasör var mı?)
-  /// Daha detaylı kontrol için tüm dosyalar sayılabilir
+  /// Sure indirilmiş mi kontrol et
   Future<bool> isSurahDownloaded(int surahId) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final surahDir = Directory('${dir.path}/quran_audio/$surahId');
-    return await surahDir.exists();
+    if (kIsWeb) return false;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final surahDir = Directory('${dir.path}/quran_audio/$surahId');
+      return await surahDir.exists();
+    } catch (e) {
+      return false;
+    }
   }
   
   /// Yerel ses dosyası yolunu getir
   Future<String?> getLocalAudioPath(int surahId, int ayahNumber) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}/quran_audio/$surahId/$ayahNumber.mp3';
-    if (await File(path).exists()) {
-      return path;
+    if (kIsWeb) return null;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final path = '${dir.path}/quran_audio/$surahId/$ayahNumber.mp3';
+      if (await File(path).exists()) {
+        return path;
+      }
+    } catch (e) {
+      return null;
     }
     return null;
   }
 
   /// Wi-Fi kısıtlaması var mı?
   Future<bool> _shouldRestrictDownload() async {
+    if (kIsWeb) return false;
     final prefs = await SharedPreferences.getInstance();
-    final wifiOnly = prefs.getBool(PREF_WIFI_ONLY) ?? true; // Varsayılan: True
+    // ignore: constant_identifier_names
+    final wifiOnly = prefs.getBool(PREF_WIFI_ONLY) ?? true;
     
     if (!wifiOnly) return false;
 
