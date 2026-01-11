@@ -309,17 +309,32 @@ class SurahDetailPage extends StatefulWidget {
 
 class _SurahDetailPageState extends State<SurahDetailPage> {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  // ignore: unused_field
   int? _currentPlayingIndex;
-  bool _isPlaying = false;
-  List<Ayah> _ayahs = [];
+  bool _isPlayerReady = false;
+  // Removed unused _ayahs field
 
   @override
   void initState() {
     super.initState();
-    // Listen for playback completion to auto-play next
+    _setupAudioPlayer();
+  }
+
+  void _setupAudioPlayer() {
+    // Listen to playback state to update UI
     _audioPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        _playNextAyah();
+      if (mounted) {
+        setState(() {});
+      }
+    });
+
+    // Listen to current item index to update highlighted ayah
+    _audioPlayer.currentIndexStream.listen((index) {
+      if (mounted && index != null) {
+        setState(() {
+          _currentPlayingIndex = index;
+        });
+        // Auto-scroll logic could be added here
       }
     });
   }
@@ -330,21 +345,51 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     super.dispose();
   }
 
+  Future<void> _initPlaylist(List<Ayah> ayahs) async {
+    if (_isPlayerReady || ayahs.isEmpty) return;
+
+    try {
+      final audioSources = ayahs
+          .where((a) => a.audioUrl != null)
+          .map((a) => AudioSource.uri(Uri.parse(a.audioUrl!)))
+          .toList();
+
+      if (audioSources.isEmpty) return;
+
+      final playlist = ConcatenatingAudioSource(children: audioSources);
+      
+      // Preload the playlist but don't auto-play yet
+      await _audioPlayer.setAudioSource(
+        playlist, 
+        initialIndex: 0, 
+        preload: false
+      );
+      
+      _ayahs = ayahs;
+      _isPlayerReady = true;
+    } catch (e) {
+      debugPrint('Error initializing playlist: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => getIt<QuranBloc>()..add(LoadSurah(widget.surahNumber)),
       child: Scaffold(
         backgroundColor: Colors.grey[50],
-        body: BlocBuilder<QuranBloc, QuranState>(
+        body: BlocConsumer<QuranBloc, QuranState>(
+          listener: (context, state) {
+            if (state is SurahDetailLoaded && !_isPlayerReady) {
+              _initPlaylist(state.surah.ayahs);
+            }
+          },
           builder: (context, state) {
             if (state is QuranLoading) {
               return const Center(child: CircularProgressIndicator());
             }
             
             if (state is SurahDetailLoaded) {
-              // Store ayahs for continuous playback
-              _ayahs = state.surah.ayahs;
               return _buildContent(context, state.surah);
             }
             
@@ -355,30 +400,60 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             return const SizedBox();
           },
         ),
-        // Floating button to play full surah
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            if (_isPlaying) {
-              _pauseAudio();
-            } else {
-              if (_ayahs.isNotEmpty) {
-                // Continue from last or start from 0
-                _playAyah(_ayahs[_currentPlayingIndex ?? 0], _currentPlayingIndex ?? 0);
-              }
-            }
-          },
-          label: Text(_isPlaying ? 'Duraklat' : 'Tümünü Oku'),
-          icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-          backgroundColor: AppTheme.primaryGreen,
-        ),
+        floatingActionButton: _buildFab(),
       ),
     );
   }
 
+  Widget _buildFab() {
+    return StreamBuilder<PlayerState>(
+      stream: _audioPlayer.playerStateStream,
+      builder: (context, snapshot) {
+        final playerState = snapshot.data;
+        final processingState = playerState?.processingState;
+        final playing = playerState?.playing;
+        
+        final isLoading = processingState == ProcessingState.loading || 
+                          processingState == ProcessingState.buffering;
+        
+        // Define isPlaying for UI
+        final isPlaying = playing == true && processingState != ProcessingState.completed;
+
+        if (isLoading) {
+           return FloatingActionButton(
+            backgroundColor: AppTheme.primaryGreen,
+            child: const CircularProgressIndicator(color: Colors.white),
+            onPressed: () => _audioPlayer.stop(),
+          );
+        }
+
+        return FloatingActionButton.extended(
+          backgroundColor: AppTheme.primaryGreen,
+          onPressed: () {
+            if (isPlaying) {
+              _audioPlayer.pause();
+            } else {
+              // If completed, seek to start
+              if (processingState == ProcessingState.completed) {
+                _audioPlayer.seek(Duration.zero, index: 0);
+              }
+              _audioPlayer.play();
+            }
+          },
+          label: Text(isPlaying ? 'Duraklat' : 'Tümünü Oku'),
+          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+        );
+      },
+    );
+  }
+
   Widget _buildContent(BuildContext context, SurahDetail surah) {
+    // Current playing index from player
+    final currentIndex = _audioPlayer.currentIndex;
+    final isPlaying = _audioPlayer.playing;
+
     return CustomScrollView(
       slivers: [
-        // Header
         SliverAppBar(
           expandedHeight: 200,
           pinned: true,
@@ -430,7 +505,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           ),
         ),
         
-        // Besmele (Fatiha ve Tevbe hariç)
         if (surah.number != 1 && surah.number != 9)
           SliverToBoxAdapter(
             child: Container(
@@ -448,16 +522,28 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             ),
           ),
         
-        // Ayetler
         SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) => _AyahCard(
-              ayah: surah.ayahs[index],
-              surahNumber: surah.number,
-              isPlaying: _isPlaying && _currentPlayingIndex == index,
-              onPlay: () => _playAyah(surah.ayahs[index], index),
-              onPause: _pauseAudio,
-            ),
+            (context, index) {
+              // Highlight if this index matches player index
+              final isCurrentAyah = currentIndex == index;
+              
+              return _AyahCard(
+                ayah: surah.ayahs[index],
+                surahNumber: surah.number,
+                // Only show "playing" state (green border) if it's the current ayah AND player is actually playing/loading
+                isPlaying: isCurrentAyah && (isPlaying || _audioPlayer.processingState == ProcessingState.buffering),
+                
+                // Play specific ayah
+                onPlay: () async {
+                   await _audioPlayer.seek(Duration.zero, index: index);
+                   _audioPlayer.play();
+                },
+                
+                // Pause
+                onPause: () => _audioPlayer.pause(),
+              );
+            },
             childCount: surah.ayahs.length,
           ),
         ),
@@ -465,48 +551,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
       ],
     );
-  }
-
-  Future<void> _playAyah(Ayah ayah, int index) async {
-    if (ayah.audioUrl == null) return;
-    
-    // Stop current explicitly to reset buffers
-    await _audioPlayer.stop();
-    
-    try {
-      await _audioPlayer.setUrl(ayah.audioUrl!);
-      _audioPlayer.play();
-      setState(() {
-        _currentPlayingIndex = index;
-        _isPlaying = true;
-      });
-    } catch (e) {
-      // Handle error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ses dosyası hatası')),
-        );
-      }
-    }
-  }
-
-  void _pauseAudio() {
-    _audioPlayer.pause();
-    setState(() => _isPlaying = false);
-  }
-
-  void _playNextAyah() {
-    if (_ayahs.isEmpty || _currentPlayingIndex == null) return;
-    
-    final nextIndex = _currentPlayingIndex! + 1;
-    if (nextIndex < _ayahs.length) {
-      _playAyah(_ayahs[nextIndex], nextIndex);
-    } else {
-      setState(() {
-        _isPlaying = false;
-        _currentPlayingIndex = null;
-      });
-    }
   }
 }
 
