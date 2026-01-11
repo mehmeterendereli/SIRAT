@@ -11,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import 'qibla_page.dart';
 import 'zikirmatik_page.dart';
 import 'islam_ai_page.dart';
+import 'quran_page.dart';
 import 'settings_page.dart';
 
 /// HomePage (Dashboard) with Time-Aware visuals
@@ -27,11 +28,12 @@ class _HomePageState extends State<HomePage> {
   int _currentNavIndex = 0;
 
   void _goToAIPage() {
-    setState(() => _currentNavIndex = 2); // İslam-AI index
+    setState(() => _currentNavIndex = 3); // İslam-AI index
   }
 
   List<Widget> get _pages => [
     _HomeContent(onSearchTap: _goToAIPage),
+    const QuranPage(),
     const QiblaPage(),
     const IslamAIPage(),
     const SettingsPage(),
@@ -60,6 +62,11 @@ class _HomePageState extends State<HomePage> {
           icon: Icons.home_rounded,
           label: 'Ana Sayfa',
           activeColor: Color(0xFF1B5E20),
+        ),
+        FloatingNavItem(
+          icon: Icons.menu_book_rounded,
+          label: 'Kuran',
+          activeColor: Color(0xFF00695C),
         ),
         FloatingNavItem(
           icon: Icons.explore_rounded,

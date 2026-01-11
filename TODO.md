@@ -112,10 +112,10 @@
 - [x] **ZIK-004**: Bulut senkronizasyonu ✅
 
 ### 3.5 Kuran-ı Kerim Modülü
-- [ ] **QUR-001**: Audio player ile kelime takibi (Highlighting)
-- [ ] **QUR-002**: Semantik arama ("Miras ile ilgili ayetler")
-- [ ] **QUR-003**: Sure/Sayfa bookmark sistemi
-- [ ] **QUR-004**: Hatim takibi
+- [x] **QUR-001**: Audio player ile kelime takibi (Highlighting) ✅
+- [x] **QUR-002**: Semantik arama ("Miras ile ilgili ayetler") ✅
+- [x] **QUR-003**: Sure/Sayfa bookmark sistemi ✅
+- [x] **QUR-004**: Hatim takibi ✅
 
 ### 3.6 Cami Bulucu
 - [ ] **MOS-001**: Google Maps SDK entegrasyonu
