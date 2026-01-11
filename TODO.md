@@ -102,7 +102,7 @@
 - [x] **ISL-001**: Fetva/Bilgi modu (Kaynak zorunlu) ✅
 - [x] **ISL-002**: Psikolojik destek modu (Teselli) ✅
 - [x] **ISL-003**: İbadet yardımı modu ✅
-- [ ] **ISL-004**: Chat geçmişi Firestore senkronizasyonu
+- [x] **ISL-004**: Chat geçmişi Firestore senkronizasyonu ✅
 - [ ] **ISL-005**: Bilgi kartı paylaşım özelliği
 
 ### 3.4 Gelişmiş Zikirmatik

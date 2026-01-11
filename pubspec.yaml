@@ -81,7 +81,7 @@ dependencies:
   aurora_background: ^1.0.2  # Professional starfield animation
   
   # Audio
-  just_audio: ^0.9.0
+  just_audio: ^0.10.5
   audio_session: ^0.1.0
   
   # Local Storage

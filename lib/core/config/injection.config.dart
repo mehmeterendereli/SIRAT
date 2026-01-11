@@ -18,6 +18,7 @@ import '../../domain/usecases/get_prayer_times.dart' as _i130;
 import '../../presentation/bloc/islam_ai_bloc.dart' as _i851;
 import '../../presentation/bloc/location_bloc.dart' as _i678;
 import '../../presentation/bloc/prayer_bloc.dart' as _i232;
+import '../../presentation/bloc/quran_bloc.dart' as _i288;
 import '../network/dio_client.dart' as _i667;
 import '../services/analytics_service.dart' as _i222;
 import '../services/chat_history_repository.dart' as _i474;
@@ -27,6 +28,7 @@ import '../services/islam_ai_service.dart' as _i150;
 import '../services/location_service.dart' as _i669;
 import '../services/notification_service.dart' as _i941;
 import '../services/qibla_service.dart' as _i754;
+import '../services/quran_service.dart' as _i280;
 import '../services/remote_config_service.dart' as _i858;
 import '../services/zikirmatik_service.dart' as _i255;
 
@@ -43,6 +45,8 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i667.DioClient>(() => _i667.DioClient());
     gh.lazySingleton<_i222.AnalyticsService>(() => _i222.AnalyticsService());
+    gh.lazySingleton<_i474.ChatHistoryRepository>(
+        () => _i474.ChatHistoryRepository());
     gh.lazySingleton<_i1004.DailyContentService>(
         () => _i1004.DailyContentService());
     gh.lazySingleton<_i980.GeocodingService>(() => _i980.GeocodingService());
@@ -51,13 +55,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i941.NotificationService>(
         () => _i941.NotificationService());
     gh.lazySingleton<_i754.QiblaService>(() => _i754.QiblaService());
+    gh.lazySingleton<_i280.QuranService>(() => _i280.QuranService());
     gh.lazySingleton<_i858.RemoteConfigService>(
         () => _i858.RemoteConfigService());
     gh.lazySingleton<_i255.ZikirmatikService>(() => _i255.ZikirmatikService());
     gh.lazySingleton<_i645.UserPreferencesRepository>(
         () => _i645.UserPreferencesRepository());
-    gh.lazySingleton<_i474.ChatHistoryRepository>(
-        () => _i474.ChatHistoryRepository());
     gh.lazySingleton<_i471.IPrayerRepository>(
         () => _i240.PrayerRepositoryImpl(gh<_i667.DioClient>()));
     gh.factory<_i851.IslamAIBloc>(() => _i851.IslamAIBloc(
@@ -76,6 +79,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i980.GeocodingService>(),
           gh<_i645.UserPreferencesRepository>(),
         ));
+    gh.factory<_i288.QuranBloc>(
+        () => _i288.QuranBloc(gh<_i280.QuranService>()));
     return this;
   }
 }
