@@ -22,6 +22,7 @@ class _SettingsPageState extends State<SettingsPage> {
   int _preAlarmMinutes = 15;
   bool _notificationsEnabled = true;
   bool _preAlarmEnabled = true;
+  bool _wifiOnlyEnabled = true;
   
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _preAlarmMinutes = preAlarm;
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _preAlarmEnabled = prefs.getBool('pre_alarm_enabled') ?? true;
+      _wifiOnlyEnabled = prefs.getBool('download_wifi_only') ?? true;
     });
   }
   
@@ -55,6 +57,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('pre_alarm_enabled', value);
     setState(() => _preAlarmEnabled = value);
+  }
+
+  Future<void> _saveWifiOnly(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('download_wifi_only', value);
+    setState(() => _wifiOnlyEnabled = value);
   }
   
   Future<void> _saveSound(AzanSound sound) async {
@@ -101,6 +109,17 @@ class _SettingsPageState extends State<SettingsPage> {
           // Sound Section
           _buildSectionHeader('Ezan Sesi', Icons.music_note_rounded),
           _buildSoundSelector(),
+          
+          const Divider(height: 32),
+
+          // Downloads Section
+          _buildSectionHeader('İndirmeler', Icons.download_rounded),
+          _buildSwitchTile(
+            title: 'Sadece Wi-Fi ile İndir',
+            subtitle: 'Mobil veri kullanımını önlemek için',
+            value: _wifiOnlyEnabled,
+            onChanged: _saveWifiOnly,
+          ),
           
           const Divider(height: 32),
           

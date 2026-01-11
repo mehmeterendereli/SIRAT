@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import '../../core/config/injection.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/quran_service.dart';
+import '../../core/services/audio_download_service.dart';
 import '../bloc/quran_bloc.dart';
 
 /// =============================================================================
@@ -295,7 +296,7 @@ class _SurahListItem extends StatelessWidget {
 }
 
 // =============================================================================
-// SURAH DETAIL PAGE
+// SURAH DETAIL PAGE (UPDATED FOR OFFLINE SUPPORT)
 // =============================================================================
 
 class SurahDetailPage extends StatefulWidget {
@@ -309,34 +310,39 @@ class SurahDetailPage extends StatefulWidget {
 
 class _SurahDetailPageState extends State<SurahDetailPage> {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioDownloadService _downloadService = getIt<AudioDownloadService>();
+  
   // ignore: unused_field
   int? _currentPlayingIndex;
   bool _isPlayerReady = false;
-  // Removed unused _ayahs field
+  bool _isDownloading = false;
+  bool _isDownloaded = false;
+  double _downloadProgress = 0.0;
 
   @override
   void initState() {
     super.initState();
     _setupAudioPlayer();
+    _checkDownloadStatus();
   }
 
   void _setupAudioPlayer() {
-    // Listen to playback state to update UI
     _audioPlayer.playerStateStream.listen((state) {
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     });
 
-    // Listen to current item index to update highlighted ayah
     _audioPlayer.currentIndexStream.listen((index) {
       if (mounted && index != null) {
-        setState(() {
-          _currentPlayingIndex = index;
-        });
-        // Auto-scroll logic could be added here
+        setState(() => _currentPlayingIndex = index);
       }
     });
+  }
+
+  Future<void> _checkDownloadStatus() async {
+    final isDownloaded = await _downloadService.isSurahDownloaded(widget.surahNumber);
+    if (mounted) {
+      setState(() => _isDownloaded = isDownloaded);
+    }
   }
 
   @override
@@ -349,26 +355,89 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     if (_isPlayerReady || ayahs.isEmpty) return;
 
     try {
-      final audioSources = ayahs
-          .where((a) => a.audioUrl != null)
-          .map((a) => AudioSource.uri(Uri.parse(a.audioUrl!)))
-          .toList();
+      final audioSources = <AudioSource>[];
+
+      for (var ayah in ayahs) {
+        if (ayah.audioUrl == null) continue;
+
+        // Check for local file first
+        final localPath = await _downloadService.getLocalAudioPath(widget.surahNumber, ayah.number);
+        
+        if (localPath != null) {
+          audioSources.add(AudioSource.file(localPath));
+        } else {
+          audioSources.add(AudioSource.uri(Uri.parse(ayah.audioUrl!)));
+        }
+      }
 
       if (audioSources.isEmpty) return;
-
+      
+      // ignore: deprecated_member_use
       final playlist = ConcatenatingAudioSource(children: audioSources);
       
-      // Preload the playlist but don't auto-play yet
       await _audioPlayer.setAudioSource(
         playlist, 
         initialIndex: 0, 
         preload: false
       );
       
-      _ayahs = ayahs;
       _isPlayerReady = true;
     } catch (e) {
       debugPrint('Error initializing playlist: $e');
+    }
+  }
+
+  Future<void> _startDownload(List<Ayah> ayahs) async {
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0.0;
+    });
+
+    try {
+      await _downloadService.downloadSurah(
+        surahId: widget.surahNumber,
+        ayahs: ayahs,
+        onProgress: (progress) {
+          if (mounted) setState(() => _downloadProgress = progress);
+        },
+      );
+      
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _isDownloaded = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sure indirildi (Çevrimdışı dinlenebilir)')),
+        );
+        // Re-init playlist with local files
+        _isPlayerReady = false;
+        _initPlaylist(ayahs);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDownloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('İndirme hatası: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteDownload(List<Ayah> ayahs) async {
+    try {
+      await _downloadService.deleteSurah(widget.surahNumber);
+      if (mounted) {
+        setState(() => _isDownloaded = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('İndirilen dosyalar silindi')),
+        );
+        // Re-init playlist (will fallback to URL)
+        _isPlayerReady = false;
+        _initPlaylist(ayahs);
+      }
+    } catch (e) {
+      // Error handling
     }
   }
 
@@ -416,7 +485,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         final isLoading = processingState == ProcessingState.loading || 
                           processingState == ProcessingState.buffering;
         
-        // Define isPlaying for UI
         final isPlaying = playing == true && processingState != ProcessingState.completed;
 
         if (isLoading) {
@@ -433,7 +501,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             if (isPlaying) {
               _audioPlayer.pause();
             } else {
-              // If completed, seek to start
               if (processingState == ProcessingState.completed) {
                 _audioPlayer.seek(Duration.zero, index: 0);
               }
@@ -448,7 +515,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   }
 
   Widget _buildContent(BuildContext context, SurahDetail surah) {
-    // Current playing index from player
     final currentIndex = _audioPlayer.currentIndex;
     final isPlaying = _audioPlayer.playing;
 
@@ -475,7 +541,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
                       Text(
                         surah.name,
                         style: const TextStyle(
@@ -503,6 +569,40 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            if (_isDownloading)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      value: _downloadProgress,
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ),
+              )
+            else if (_isDownloaded)
+              IconButton(
+                icon: const Icon(Icons.offline_pin, color: Colors.white),
+                tooltip: 'İndirildi (Silmek için basılı tutun)',
+                onPressed: () {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Silmek için basılı tutun')),
+                  );
+                },
+                onLongPress: () => _deleteDownload(surah.ayahs),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.cloud_download_outlined, color: Colors.white),
+                tooltip: 'Sureyi İndir',
+                onPressed: () => _startDownload(surah.ayahs),
+              ),
+          ],
         ),
         
         if (surah.number != 1 && surah.number != 9)
@@ -525,22 +625,15 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              // Highlight if this index matches player index
               final isCurrentAyah = currentIndex == index;
-              
               return _AyahCard(
                 ayah: surah.ayahs[index],
                 surahNumber: surah.number,
-                // Only show "playing" state (green border) if it's the current ayah AND player is actually playing/loading
                 isPlaying: isCurrentAyah && (isPlaying || _audioPlayer.processingState == ProcessingState.buffering),
-                
-                // Play specific ayah
                 onPlay: () async {
                    await _audioPlayer.seek(Duration.zero, index: index);
                    _audioPlayer.play();
                 },
-                
-                // Pause
                 onPause: () => _audioPlayer.pause(),
               );
             },

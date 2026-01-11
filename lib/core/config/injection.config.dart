@@ -21,6 +21,7 @@ import '../../presentation/bloc/prayer_bloc.dart' as _i232;
 import '../../presentation/bloc/quran_bloc.dart' as _i288;
 import '../network/dio_client.dart' as _i667;
 import '../services/analytics_service.dart' as _i222;
+import '../services/audio_download_service.dart' as _i207;
 import '../services/chat_history_repository.dart' as _i474;
 import '../services/daily_content_service.dart' as _i1004;
 import '../services/geocoding_service.dart' as _i980;
@@ -61,6 +62,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i255.ZikirmatikService>(() => _i255.ZikirmatikService());
     gh.lazySingleton<_i645.UserPreferencesRepository>(
         () => _i645.UserPreferencesRepository());
+    gh.lazySingleton<_i207.AudioDownloadService>(
+        () => _i207.AudioDownloadService());
     gh.lazySingleton<_i471.IPrayerRepository>(
         () => _i240.PrayerRepositoryImpl(gh<_i667.DioClient>()));
     gh.factory<_i851.IslamAIBloc>(() => _i851.IslamAIBloc(
