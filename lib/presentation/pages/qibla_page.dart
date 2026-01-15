@@ -35,6 +35,9 @@ class _QiblaPageState extends State<QiblaPage> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    // QiblaService'i burada oluştur - sayfa kapandığında dispose edilecek
+    _qiblaService = QiblaService();
+    
     WidgetsBinding.instance.addObserver(this);
     if (!kIsWeb) {
       _initCamera();

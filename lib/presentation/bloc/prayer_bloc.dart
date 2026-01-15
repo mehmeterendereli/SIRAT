@@ -7,6 +7,7 @@ import '../../domain/entities/prayer_time.dart';
 import '../../domain/usecases/get_prayer_times.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/geocoding_service.dart';
+import '../../core/services/ip_geolocation_service.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 
 // Events
@@ -48,16 +49,18 @@ class PrayerLoaded extends PrayerState {
   final String locationName;
   final double? latitude;
   final double? longitude;
+  final bool isApproximateLocation; // IP tabanlı konum mu?
   
   const PrayerLoaded(
     this.prayerTime, 
     this.locationName, {
     this.latitude,
     this.longitude,
+    this.isApproximateLocation = false,
   });
   
   @override
-  List<Object?> get props => [prayerTime, locationName, latitude, longitude];
+  List<Object?> get props => [prayerTime, locationName, latitude, longitude, isApproximateLocation];
 }
 class PrayerError extends PrayerState {
   final String message;
@@ -72,12 +75,14 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   final LocationService locationService;
   final GeocodingService geocodingService;
   final UserPreferencesRepository userPrefs;
+  final IpGeolocationService ipGeolocationService;
 
   PrayerBloc(
     this.getPrayerTimes, 
     this.locationService, 
     this.geocodingService,
     this.userPrefs,
+    this.ipGeolocationService,
   ) : super(PrayerInitial()) {
     on<FetchPrayerTimes>(_onFetchPrayerTimes);
     on<FetchPrayerTimesWithLocation>(_onFetchPrayerTimesWithLocation);
@@ -86,106 +91,114 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   Future<void> _onFetchPrayerTimes(FetchPrayerTimes event, Emitter<PrayerState> emit) async {
     emit(PrayerLoading());
     
-    Position? position;
+    double? latitude;
+    double? longitude;
     String? cityName;
+    bool isApproximate = false;
     
     try {
-      // First check if location services are enabled
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        debugPrint('PrayerBloc: Location services disabled');
-        // Try to open location settings
-        await Geolocator.openLocationSettings();
-        emit(const PrayerError('GPS kapalı. Lütfen konum servislerini açın ve tekrar deneyin.'));
-        return;
-      }
+      // 1. Önce GPS konum dene
+      final gpsLocation = await _tryGetGpsLocation();
       
-      if (kIsWeb) {
-        // Web-specific location handling
-        debugPrint('PrayerBloc: Getting web location...');
-        final permission = await Geolocator.checkPermission();
+      if (gpsLocation != null) {
+        latitude = gpsLocation.latitude;
+        longitude = gpsLocation.longitude;
         
-        if (permission == LocationPermission.denied) {
-          final newPermission = await Geolocator.requestPermission();
-          if (newPermission == LocationPermission.denied || 
-              newPermission == LocationPermission.deniedForever) {
-            emit(const PrayerError('Konum izni verilmedi. Ayarlardan izin verin.'));
-            return;
-          }
-        } else if (permission == LocationPermission.deniedForever) {
-          emit(const PrayerError('Konum izni engellendi. Ayarlardan izin verin.'));
-          return;
-        }
+        // Şehir adını geocoding ile al
+        final geocodingResult = await geocodingService.reverseGeocode(latitude, longitude);
+        cityName = geocodingResult?.formattedName ?? 'Konum belirlendi';
         
-        // Get position with retry
-        for (int i = 0; i < 3; i++) {
-          try {
-            position = await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(
-                accuracy: LocationAccuracy.low,
-                timeLimit: Duration(seconds: 15),
-              ),
-            );
-            if (position != null) break;
-          } catch (e) {
-            debugPrint('PrayerBloc: Web location attempt ${i + 1} failed: $e');
-            if (i < 2) await Future.delayed(const Duration(seconds: 2));
-          }
-        }
+        debugPrint('PrayerBloc: GPS location: $cityName ($latitude, $longitude)');
       } else {
-        // Mobile - check permission first
-        LocationPermission permission = await Geolocator.checkPermission();
+        // 2. GPS başarısız - IP tabanlı konum dene
+        debugPrint('PrayerBloc: GPS failed, trying IP geolocation...');
         
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-          if (permission == LocationPermission.denied) {
-            emit(const PrayerError('Konum izni verilmedi. İzin verin ve tekrar deneyin.'));
-            return;
-          }
+        final ipLocation = await ipGeolocationService.getLocationFromIp();
+        
+        if (ipLocation != null) {
+          latitude = ipLocation.latitude;
+          longitude = ipLocation.longitude;
+          cityName = ipLocation.formattedName;
+          isApproximate = true;
+          
+          debugPrint('PrayerBloc: IP location: $cityName ($latitude, $longitude)');
+        } else {
+          // 3. IP de başarısız - Varsayılan konum (İstanbul)
+          debugPrint('PrayerBloc: IP geolocation failed, using default location');
+          
+          final defaultLocation = ipGeolocationService.getDefaultLocation();
+          latitude = defaultLocation.latitude;
+          longitude = defaultLocation.longitude;
+          cityName = defaultLocation.formattedName;
+          isApproximate = true;
         }
-        
-        if (permission == LocationPermission.deniedForever) {
-          // Open app settings
-          await Geolocator.openAppSettings();
-          emit(const PrayerError('Konum izni engellendi. Ayarlardan izin verin.'));
-          return;
-        }
-        
-        // Now get location
-        position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 15),
-          ),
-        );
       }
       
-      if (position == null) {
-        emit(const PrayerError('Konum alınamadı. Tekrar deneyin.'));
-        return;
-      }
-      
-      debugPrint('PrayerBloc: Got position: ${position.latitude}, ${position.longitude}');
-      
-      // Get city name via geocoding
-      final geocodingResult = await geocodingService.reverseGeocode(
-        position.latitude, 
-        position.longitude,
-      );
-      cityName = geocodingResult?.formattedName ?? 'Konum belirlendi';
-      debugPrint('PrayerBloc: Geocoding result: $cityName');
-      
-      // Fetch prayer times
+      // Namaz vakitlerini çek
       await _fetchAndEmitPrayerTimes(
         emit,
-        position.latitude,
-        position.longitude,
-        cityName,
+        latitude!,
+        longitude!,
+        cityName!,
+        isApproximate,
       );
       
     } catch (e) {
       debugPrint('PrayerBloc: Error - $e');
-      emit(PrayerError('Hata: ${e.toString()}'));
+      
+      // Son çare: Varsayılan konum ile dene
+      try {
+        final defaultLocation = ipGeolocationService.getDefaultLocation();
+        await _fetchAndEmitPrayerTimes(
+          emit,
+          defaultLocation.latitude,
+          defaultLocation.longitude,
+          defaultLocation.formattedName,
+          true,
+        );
+      } catch (e2) {
+        emit(PrayerError('Namaz vakitleri yüklenemedi: ${e2.toString()}'));
+      }
+    }
+  }
+  
+  /// GPS konum almayı dene - başarısız olursa null döner (hata fırlatmaz)
+  Future<Position?> _tryGetGpsLocation() async {
+    try {
+      // Servis açık mı?
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('PrayerBloc: GPS services disabled');
+        return null;
+      }
+      
+      // İzin kontrol
+      LocationPermission permission = await Geolocator.checkPermission();
+      
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied || 
+            permission == LocationPermission.deniedForever) {
+          debugPrint('PrayerBloc: GPS permission denied');
+          return null;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('PrayerBloc: GPS permission denied forever');
+        return null;
+      }
+      
+      // Konum al
+      return await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: kIsWeb ? LocationAccuracy.low : LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        ),
+      );
+    } catch (e) {
+      debugPrint('PrayerBloc: GPS error: $e');
+      return null;
     }
   }
   
@@ -195,11 +208,22 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   ) async {
     emit(PrayerLoading());
     
+    String cityName = event.cityName ?? 'Seçilen Konum';
+    
+    if (event.cityName == null) {
+      final geocodingResult = await geocodingService.reverseGeocode(
+        event.latitude, 
+        event.longitude,
+      );
+      cityName = geocodingResult?.formattedName ?? 'Seçilen Konum';
+    }
+    
     await _fetchAndEmitPrayerTimes(
       emit,
       event.latitude,
       event.longitude,
-      event.cityName ?? 'Konum belirlendi',
+      cityName,
+      false,
     );
   }
   
@@ -207,31 +231,39 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     Emitter<PrayerState> emit,
     double latitude,
     double longitude,
-    String locationName,
+    String cityName,
+    bool isApproximate,
   ) async {
     try {
-      final method = await userPrefs.getCalculationMethod() ?? 13; // Default: Diyanet Turkey
-      
-      debugPrint('PrayerBloc: Fetching prayer times for $latitude, $longitude (method: $method)');
+      final method = await userPrefs.getCalculationMethod();
+      debugPrint('PrayerBloc: Fetching prayer times for $cityName (method: $method, approx: $isApproximate)');
       
       final result = await getPrayerTimes(PrayerParams(
         latitude: latitude,
         longitude: longitude,
-        method: method,
+        method: method ?? 13, // Default: Diyanet method
         date: DateTime.now(),
       ));
-
+      
       result.fold(
-        (failure) => emit(PrayerError(failure.toString())),
-        (prayerTime) => emit(PrayerLoaded(
-          prayerTime, 
-          locationName,
-          latitude: latitude,
-          longitude: longitude,
-        )),
+        (failure) {
+          debugPrint('PrayerBloc: API error - ${failure.message}');
+          emit(PrayerError('Namaz vakitleri alınamadı: ${failure.message}'));
+        },
+        (prayerTime) {
+          debugPrint('PrayerBloc: Prayer times loaded for $cityName');
+          emit(PrayerLoaded(
+            prayerTime, 
+            cityName,
+            latitude: latitude,
+            longitude: longitude,
+            isApproximateLocation: isApproximate,
+          ));
+        },
       );
     } catch (e) {
-      emit(PrayerError('Vakit bilgisi alınamadı: ${e.toString()}'));
+      debugPrint('PrayerBloc: Error fetching prayer times: $e');
+      emit(PrayerError('Bir hata oluştu: ${e.toString()}'));
     }
   }
 }

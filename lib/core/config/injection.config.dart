@@ -25,6 +25,7 @@ import '../services/audio_download_service.dart' as _i207;
 import '../services/chat_history_repository.dart' as _i474;
 import '../services/daily_content_service.dart' as _i1004;
 import '../services/geocoding_service.dart' as _i980;
+import '../services/ip_geolocation_service.dart' as _i599;
 import '../services/islam_ai_service.dart' as _i150;
 import '../services/location_service.dart' as _i669;
 import '../services/notification_service.dart' as _i941;
@@ -44,6 +45,7 @@ extension GetItInjectableX on _i174.GetIt {
       environment,
       environmentFilter,
     );
+    gh.factory<_i754.QiblaService>(() => _i754.QiblaService());
     gh.lazySingleton<_i667.DioClient>(() => _i667.DioClient());
     gh.lazySingleton<_i222.AnalyticsService>(() => _i222.AnalyticsService());
     gh.lazySingleton<_i207.AudioDownloadService>(
@@ -57,13 +59,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i669.LocationService>(() => _i669.LocationService());
     gh.lazySingleton<_i941.NotificationService>(
         () => _i941.NotificationService());
-    gh.lazySingleton<_i754.QiblaService>(() => _i754.QiblaService());
     gh.lazySingleton<_i280.QuranService>(() => _i280.QuranService());
     gh.lazySingleton<_i858.RemoteConfigService>(
         () => _i858.RemoteConfigService());
     gh.lazySingleton<_i255.ZikirmatikService>(() => _i255.ZikirmatikService());
     gh.lazySingleton<_i645.UserPreferencesRepository>(
         () => _i645.UserPreferencesRepository());
+    gh.lazySingleton<_i599.IpGeolocationService>(
+        () => _i599.IpGeolocationService());
     gh.lazySingleton<_i471.IPrayerRepository>(
         () => _i240.PrayerRepositoryImpl(gh<_i667.DioClient>()));
     gh.factory<_i851.IslamAIBloc>(() => _i851.IslamAIBloc(
@@ -81,6 +84,7 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i669.LocationService>(),
           gh<_i980.GeocodingService>(),
           gh<_i645.UserPreferencesRepository>(),
+          gh<_i599.IpGeolocationService>(),
         ));
     gh.factory<_i288.QuranBloc>(
         () => _i288.QuranBloc(gh<_i280.QuranService>()));

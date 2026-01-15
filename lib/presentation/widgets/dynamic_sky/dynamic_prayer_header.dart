@@ -99,7 +99,7 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
           return _buildErrorState(context, state.message, headerHeight);
         }
         
-        // Loading state
+        // Loading state - Premium skeleton/shimmer effect
         return Container(
           height: headerHeight,
           decoration: BoxDecoration(
@@ -113,16 +113,72 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
             ),
           ),
           child: SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(color: Colors.white),
-                const SizedBox(height: 16),
-                Text(
-                  'Namaz vakitleri yükleniyor...',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8)),
-                ),
-              ],
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  // Skeleton header
+                  _buildSkeletonBox(width: 150, height: 28),
+                  const SizedBox(height: 8),
+                  _buildSkeletonBox(width: 120, height: 14),
+                  
+                  const Spacer(),
+                  
+                  // Skeleton card
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Next prayer skeleton
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildSkeletonBox(width: 60, height: 14),
+                              const SizedBox(width: 8),
+                              _buildSkeletonBox(width: 40, height: 14),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Countdown skeleton
+                          _buildSkeletonBox(width: 100, height: 32),
+                          const SizedBox(height: 16),
+                          // Prayer times skeleton
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(5, (_) => 
+                              Column(
+                                children: [
+                                  _buildSkeletonBox(width: 30, height: 10),
+                                  const SizedBox(height: 6),
+                                  _buildSkeletonBox(width: 40, height: 14),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Skeleton search bar
+                  _buildSkeletonBox(width: double.infinity, height: 50, borderRadius: 15),
+                  
+                  const SizedBox(height: 12),
+                ],
+              ),
             ),
           ),
         );
@@ -176,6 +232,22 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
             ),
           ),
         ),
+      ),
+    );
+  }
+  
+  /// Skeleton placeholder box for loading state
+  Widget _buildSkeletonBox({
+    required double width, 
+    required double height, 
+    double borderRadius = 8,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }
