@@ -160,7 +160,7 @@ abstract class AppLocalizations {
   /// No description provided for @nav_ai_assistant.
   ///
   /// In en, this message translates to:
-  /// **'Islam-AI'**
+  /// **'SIRAT AI'**
   String get nav_ai_assistant;
 
   /// No description provided for @nav_settings.
@@ -202,7 +202,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiSuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Islam-AI Suggestion'**
+  /// **'SIRAT AI Suggestion'**
   String get aiSuggestion;
 
   /// No description provided for @prayer_fajr.
@@ -328,7 +328,7 @@ abstract class AppLocalizations {
   /// No description provided for @ai_title.
   ///
   /// In en, this message translates to:
-  /// **'Islam-AI Assistant'**
+  /// **'SIRAT AI Assistant'**
   String get ai_title;
 
   /// No description provided for @ai_placeholder.

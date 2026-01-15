@@ -14,7 +14,7 @@
   "nav_qibla": "Kıble",
   "nav_quran": "Kuran-ı Kerim",
   "nav_zikirmatik": "Zikirmatik",
-  "nav_ai_assistant": "İslam-AI",
+  "nav_ai_assistant": "SIRAT AI",
   "nav_settings": "Ayarlar",
   
   "quickActions": "Hızlı İşlemler",
@@ -22,7 +22,7 @@
   "qiblaFinder": "Kıble Bul",
   "readQuran": "Kuran Oku",
   "findMosque": "Cami Bul",
-  "aiSuggestion": "İslam-AI Önerisi",
+  "aiSuggestion": "SIRAT AI Önerisi",
   
   "prayer_fajr": "İmsak",
   "prayer_sunrise": "Güneş",
@@ -48,7 +48,7 @@
   "zikirmatik_total": "Toplam",
   "zikirmatik_today": "Bugün",
   
-  "ai_title": "İslam-AI Asistan",
+  "ai_title": "SIRAT AI Asistan",
   "ai_placeholder": "Bugün kafana takılan bir soru var mı?",
   "ai_thinking": "Düşünüyorum...",
   "ai_share": "Kartı Paylaş",

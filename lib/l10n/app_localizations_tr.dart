@@ -39,7 +39,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nav_zikirmatik => 'Zikirmatik';
 
   @override
-  String get nav_ai_assistant => 'İslam-AI';
+  String get nav_ai_assistant => 'SIRAT AI';
 
   @override
   String get nav_settings => 'Ayarlar';
@@ -60,7 +60,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get findMosque => 'Cami Bul';
 
   @override
-  String get aiSuggestion => 'İslam-AI Önerisi';
+  String get aiSuggestion => 'SIRAT AI Önerisi';
 
   @override
   String get prayer_fajr => 'İmsak';
@@ -123,7 +123,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get zikirmatik_today => 'Bugün';
 
   @override
-  String get ai_title => 'İslam-AI Asistan';
+  String get ai_title => 'SIRAT AI Asistan';
 
   @override
   String get ai_placeholder => 'Bugün kafana takılan bir soru var mı?';

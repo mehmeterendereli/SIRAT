@@ -39,7 +39,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nav_zikirmatik => 'Dhikr Counter';
 
   @override
-  String get nav_ai_assistant => 'Islam-AI';
+  String get nav_ai_assistant => 'SIRAT AI';
 
   @override
   String get nav_settings => 'Settings';
@@ -60,7 +60,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get findMosque => 'Find Mosque';
 
   @override
-  String get aiSuggestion => 'Islam-AI Suggestion';
+  String get aiSuggestion => 'SIRAT AI Suggestion';
 
   @override
   String get prayer_fajr => 'Fajr';
@@ -123,7 +123,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get zikirmatik_today => 'Today';
 
   @override
-  String get ai_title => 'Islam-AI Assistant';
+  String get ai_title => 'SIRAT AI Assistant';
 
   @override
   String get ai_placeholder => 'Do you have a question on your mind today?';

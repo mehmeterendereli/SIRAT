@@ -60,7 +60,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get findMosque => 'Find Mosque';
 
   @override
-  String get aiSuggestion => 'Islam-AI Suggestion';
+  String get aiSuggestion => 'SIRAT AI Suggestion';
 
   @override
   String get prayer_fajr => 'الفجر';

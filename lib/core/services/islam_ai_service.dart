@@ -2,7 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:injectable/injectable.dart';
 
-/// İslam-AI Service
+/// SIRAT AI Service
 /// Gemini Pro ile entegre akıllı İslami asistan servisi.
 
 enum AIMode { fetva, teselli, ibadet }

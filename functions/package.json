@@ -2,15 +2,16 @@
     "name": "sirat-functions",
     "description": "SIRAT Cloud Functions for Gemini AI and scheduled tasks",
     "dependencies": {
+        "@google/generative-ai": "^0.11.0",
+        "dotenv": "^17.2.3",
         "firebase-admin": "^12.0.0",
-        "firebase-functions": "^5.0.0",
-        "@google/generative-ai": "^0.11.0"
+        "firebase-functions": "^5.0.0"
     },
     "devDependencies": {
         "firebase-functions-test": "^3.1.0"
     },
     "private": true,
     "engines": {
-        "node": "18"
+        "node": "22"
     }
 }

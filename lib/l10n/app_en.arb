@@ -14,7 +14,7 @@
   "nav_qibla": "Qibla",
   "nav_quran": "Quran",
   "nav_zikirmatik": "Dhikr Counter",
-  "nav_ai_assistant": "Islam-AI",
+  "nav_ai_assistant": "SIRAT AI",
   "nav_settings": "Settings",
   
   "quickActions": "Quick Actions",
@@ -22,7 +22,7 @@
   "qiblaFinder": "Qibla Finder",
   "readQuran": "Read Quran",
   "findMosque": "Find Mosque",
-  "aiSuggestion": "Islam-AI Suggestion",
+  "aiSuggestion": "SIRAT AI Suggestion",
   
   "prayer_fajr": "Fajr",
   "prayer_sunrise": "Sunrise",
@@ -48,7 +48,7 @@
   "zikirmatik_total": "Total",
   "zikirmatik_today": "Today",
   
-  "ai_title": "Islam-AI Assistant",
+  "ai_title": "SIRAT AI Assistant",
   "ai_placeholder": "Do you have a question on your mind today?",
   "ai_thinking": "Thinking...",
   "ai_share": "Share Card",
