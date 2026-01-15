@@ -70,17 +70,38 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
     super.dispose();
   }
 
+  /// Calculate responsive header height based on screen size
+  double _getHeaderHeight(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // For tablets/large screens
+    if (screenWidth > 600) {
+      return (screenHeight * 0.40).clamp(350.0, 450.0);
+    }
+    
+    // For phones - scale based on screen height
+    return (screenHeight * 0.48).clamp(320.0, 480.0);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final headerHeight = _getHeaderHeight(context);
+    
     return BlocBuilder<PrayerBloc, PrayerState>(
       builder: (context, state) {
         if (state is PrayerLoaded) {
-          return _buildContent(context, state.prayerTime, state.locationName);
+          return _buildContent(context, state.prayerTime, state.locationName, headerHeight);
+        }
+        
+        // Error state with retry button
+        if (state is PrayerError) {
+          return _buildErrorState(context, state.message, headerHeight);
         }
         
         // Loading state
         return Container(
-          height: 420,
+          height: headerHeight,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -91,15 +112,75 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
               ],
             ),
           ),
-          child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: 16),
+                Text(
+                  'Namaz vakitleri yükleniyor...',
+                  style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
   
-  Widget _buildContent(BuildContext context, PrayerTime prayer, String locationName) {
+  /// Error state with retry button
+  Widget _buildErrorState(BuildContext context, String message, double height) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppTheme.primaryGreen,
+            AppTheme.teal,
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.location_off_rounded, size: 48, color: Colors.white70),
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<PrayerBloc>().add(FetchPrayerTimes());
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tekrar Dene'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryGreen,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildContent(BuildContext context, PrayerTime prayer, String locationName, double headerHeight) {
     final skyController = SkyController(prayerTime: prayer, currentTime: _now);
     final celestialCalculator = CelestialCalculator(prayerTime: prayer, currentTime: _now);
     final greeting = SmartGreeting(prayerTime: prayer, currentTime: _now);
@@ -108,8 +189,13 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
     final nextPrayer = _findNextPrayer(prayer);
     _countdown = _calculateCountdown(nextPrayer['time']);
     
+    // Get screen dimensions for responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final padding = isSmallScreen ? 16.0 : 24.0;
+    
     return SizedBox(
-      height: 420,
+      height: headerHeight,
       child: Stack(
         children: [
           // ===== LAYER 0: SKY GRADIENT BACKGROUND =====
@@ -191,122 +277,157 @@ class _DynamicPrayerHeaderState extends State<DynamicPrayerHeader>
           
           // ===== LAYER 4: UI CONTENT =====
           SafeArea(
-            child: Column(
-              children: [
-                // Header Row
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              greeting.getGreeting(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(color: Colors.black26, blurRadius: 4),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
+            bottom: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final availableHeight = constraints.maxHeight;
+                final isVerySmall = availableHeight < 300;
+                final isSmall = availableHeight < 380;
+                
+                // Calculate responsive sizes
+                final greetingFontSize = isVerySmall ? 20.0 : (isSmall ? 24.0 : 28.0);
+                final topPadding = isVerySmall ? 8.0 : (isSmall ? 12.0 : 16.0);
+                final cardBottomSpacing = isVerySmall ? 8.0 : (isSmall ? 12.0 : 16.0);
+                final searchBarHeight = isVerySmall ? 40.0 : (isSmall ? 44.0 : 50.0);
+                final horizontalPadding = isSmall ? 16.0 : 24.0;
+                
+                return Column(
+                  children: [
+                    // Header Row - Compact on small screens
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(horizontalPadding, topPadding, horizontalPadding, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14,
-                                  color: Colors.white70,
-                                ),
-                                const SizedBox(width: 4),
                                 Text(
-                                  widget.locationName ?? locationName,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
+                                  greeting.getGreeting(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: greetingFontSize,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: const [
+                                      Shadow(color: Colors.black26, blurRadius: 4),
+                                    ],
                                   ),
                                 ),
+                                if (!isVerySmall) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        size: 14,
+                                        color: Colors.white70,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          widget.locationName ?? locationName,
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: isSmall ? 12 : 14,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (!isVerySmall && !isSmall) ...[
+                                  const SizedBox(height: 4),
+                                  _buildHijriDateRow(),
+                                ],
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            // Hicri Tarih
-                            _buildHijriDateRow(),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const Spacer(),
-                
-                // ===== FROSTED GLASS CARD =====
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: _FrostedGlassCard(
-                        prayer: prayer,
-                        nextPrayer: nextPrayer,
-                        countdown: _countdown,
-                      ),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: GestureDetector(
-                    onTap: widget.onSearchTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.search, color: AppTheme.primaryGreen),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Sirat\'a sor...',
-                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white24,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.notifications_none_rounded, 
+                                color: Colors.white,
+                                size: isSmall ? 20 : 24,
+                              ),
+                              padding: EdgeInsets.all(isSmall ? 8 : 12),
+                              constraints: BoxConstraints(
+                                minWidth: isSmall ? 36 : 48,
+                                minHeight: isSmall ? 36 : 48,
+                              ),
+                              onPressed: () {},
                             ),
                           ),
-                          Icon(Icons.mic_none_rounded, color: AppTheme.primaryGreen),
                         ],
                       ),
                     ),
-                  ),
-                ),
-              ],
+                    
+                    // Flexible spacer - takes remaining space
+                    const Expanded(child: SizedBox()),
+                    
+                    // ===== FROSTED GLASS CARD =====
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: _FrostedGlassCard(
+                            prayer: prayer,
+                            nextPrayer: nextPrayer,
+                            countdown: _countdown,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(height: cardBottomSpacing),
+                    
+                    // Search Bar - Responsive height
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, isSmall ? 8 : 12),
+                      child: GestureDetector(
+                        onTap: widget.onSearchTap,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: isSmall ? 12 : 16),
+                          height: searchBarHeight,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(isSmall ? 12 : 15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.search, color: AppTheme.primaryGreen, size: isSmall ? 20 : 24),
+                              SizedBox(width: isSmall ? 8 : 12),
+                              Expanded(
+                                child: Text(
+                                  'Sirat\'a sor...',
+                                  style: TextStyle(fontSize: isSmall ? 12 : 14, color: Colors.grey),
+                                ),
+                              ),
+                              Icon(Icons.mic_none_rounded, color: AppTheme.primaryGreen, size: isSmall ? 20 : 24),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -558,102 +679,127 @@ class _FrostedGlassCard extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final isMediumScreen = screenWidth >= 360 && screenWidth < 400;
+    
+    // Responsive values
+    final cardPadding = isSmallScreen ? 12.0 : (isMediumScreen ? 16.0 : 20.0);
+    final titleFontSize = isSmallScreen ? 10.0 : 12.0;
+    final nextPrayerFontSize = isSmallScreen ? 20.0 : 24.0;
+    final countdownFontSize = isSmallScreen ? 24.0 : (isMediumScreen ? 28.0 : 32.0);
+    final countdownPaddingH = isSmallScreen ? 16.0 : 28.0;
+    final countdownPaddingV = isSmallScreen ? 10.0 : 14.0;
+    final spacing = isSmallScreen ? 8.0 : 12.0;
+    
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(cardPadding),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0.25),
-                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withOpacity(0.25),
+                Colors.white.withOpacity(0.15),
               ],
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 24),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: Colors.white.withOpacity(0.3),
               width: 1,
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Next prayer info
               Text(
                 'Sıradaki Vakit',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: titleFontSize,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                nextPrayer['name'],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              SizedBox(height: isSmallScreen ? 2 : 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  nextPrayer['name'],
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: nextPrayerFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: spacing),
               
               // Countdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: countdownPaddingH, 
+                    vertical: countdownPaddingV,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    countdown,
+                    style: TextStyle(
+                      color: AppTheme.primaryGreen,
+                      fontSize: countdownFontSize,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: isSmallScreen ? 2 : 3,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
-                  ],
-                ),
-                child: Text(
-                  countdown,
-                  style: TextStyle(
-                    color: AppTheme.primaryGreen,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
-                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
               
-              const SizedBox(height: 12),
+              SizedBox(height: spacing),
               
-              // Prayer times row
+              // Prayer times row - Responsive chips
               LayoutBuilder(
                 builder: (context, constraints) {
                   final availableWidth = constraints.maxWidth;
                   const chipCount = 6;
-                  const spacing = 6.0;
-                  const totalSpacing = spacing * (chipCount - 1);
+                  final chipSpacing = isSmallScreen ? 4.0 : 6.0;
+                  final totalSpacing = chipSpacing * (chipCount - 1);
                   final chipWidth = (availableWidth - totalSpacing) / chipCount;
                   
-                  final labelFontSize = (chipWidth * 0.18).clamp(9.0, 12.0);
-                  final timeFontSize = (chipWidth * 0.24).clamp(11.0, 15.0);
-                  final verticalPadding = (chipWidth * 0.12).clamp(6.0, 10.0);
+                  // Responsive font sizes clamped to prevent overflow
+                  final labelFontSize = (chipWidth * 0.20).clamp(7.0, 11.0);
+                  final timeFontSize = (chipWidth * 0.26).clamp(9.0, 14.0);
+                  final verticalPadding = (chipWidth * 0.10).clamp(4.0, 8.0);
                   
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _PrayerChip(label: 'İmsak', time: prayer.imsak, isActive: nextPrayer['name'] == 'İmsak', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
-                      const SizedBox(width: spacing),
+                      SizedBox(width: chipSpacing),
                       _PrayerChip(label: 'Güneş', time: prayer.gunes, isActive: nextPrayer['name'] == 'Güneş', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
-                      const SizedBox(width: spacing),
+                      SizedBox(width: chipSpacing),
                       _PrayerChip(label: 'Öğle', time: prayer.ogle, isActive: nextPrayer['name'] == 'Öğle', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
-                      const SizedBox(width: spacing),
+                      SizedBox(width: chipSpacing),
                       _PrayerChip(label: 'İkindi', time: prayer.ikindi, isActive: nextPrayer['name'] == 'İkindi', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
-                      const SizedBox(width: spacing),
+                      SizedBox(width: chipSpacing),
                       _PrayerChip(label: 'Akşam', time: prayer.aksam, isActive: nextPrayer['name'] == 'Akşam', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
-                      const SizedBox(width: spacing),
+                      SizedBox(width: chipSpacing),
                       _PrayerChip(label: 'Yatsı', time: prayer.yatsi, isActive: nextPrayer['name'] == 'Yatsı', width: chipWidth, labelFontSize: labelFontSize, timeFontSize: timeFontSize, verticalPadding: verticalPadding),
                     ],
                   );

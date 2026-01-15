@@ -8,8 +8,11 @@ import 'package:injectable/injectable.dart';
 /// Qibla Service
 /// Sensor Fusion ile GPS + Pusula entegrasyonu.
 /// Kabe koordinatlarına göre kıble yönü hesaplar.
+/// 
+/// NOT: Factory pattern kullanılır - her sayfa açıldığında yeni instance
+/// oluşturulur ve sayfa kapandığında dispose edilir.
 
-@lazySingleton
+@injectable
 class QiblaService {
   // Kabe Koordinatları (Kutsal Kabe, Mekke)
   static const double _kabeLatitude = 21.4225;
@@ -17,11 +20,19 @@ class QiblaService {
 
   StreamSubscription<CompassEvent>? _compassSubscription;
   StreamController<QiblaData>? _qiblaController;
+  bool _isDisposed = false;
 
   /// Kıble verisini stream olarak dinle
   Stream<QiblaData> getQiblaStream() {
+    // Önceki stream'i temizle
+    _cleanupResources();
+    _isDisposed = false;
+    
     _qiblaController = StreamController<QiblaData>.broadcast(
-      onCancel: () => _compassSubscription?.cancel(),
+      onCancel: () {
+        // Son listener ayrıldığında temizle
+        _cleanupResources();
+      },
     );
 
     _startQiblaCalculation();
@@ -29,10 +40,14 @@ class QiblaService {
   }
 
   Future<void> _startQiblaCalculation() async {
+    if (_isDisposed || _qiblaController == null) return;
+    
     // Önce konum izni kontrolü
     final position = await _getCurrentPosition();
+    if (_isDisposed || _qiblaController == null) return;
+    
     if (position == null) {
-      _qiblaController?.addError(QiblaError.locationPermissionDenied);
+      _safeAddError(QiblaError.locationPermissionDenied);
       return;
     }
 
@@ -44,21 +59,28 @@ class QiblaService {
 
     // Pusula verisi kontrolü
     final hasCompass = await FlutterCompass.events != null;
+    if (_isDisposed || _qiblaController == null) return;
+    
     if (!hasCompass) {
-      _qiblaController?.addError(QiblaError.compassNotAvailable);
+      _safeAddError(QiblaError.compassNotAvailable);
       return;
     }
 
     // Pusula stream'ini dinle
     _compassSubscription = FlutterCompass.events?.listen((event) {
+      if (_isDisposed || _qiblaController == null || _qiblaController!.isClosed) {
+        return;
+      }
+      
       final heading = event.heading;
       if (heading == null) {
-        _qiblaController?.add(QiblaData(
+        _safeAdd(QiblaData(
           qiblaAngle: qiblaAngle,
           compassHeading: 0,
           relativeAngle: qiblaAngle,
           accuracy: event.accuracy ?? 0,
           hasInterference: true,
+          needsCalibration: true,
         ));
         return;
       }
@@ -66,22 +88,55 @@ class QiblaService {
       // Göreceli açı = Kıble açısı - Pusula yönü
       double relativeAngle = qiblaAngle - heading;
       
-      // Açıyı 0-360 aralığına normalize et
-      if (relativeAngle < 0) {
+      // Açıyı -180 ile +180 aralığına normalize et
+      while (relativeAngle > 180) {
+        relativeAngle -= 360;
+      }
+      while (relativeAngle < -180) {
         relativeAngle += 360;
       }
+      
+      // Accuracy < 15 = düşük doğruluk (parazit veya kalibrasyon gerekli)
+      final accuracy = event.accuracy ?? 0;
+      final needsCalibration = accuracy < 25;
 
-      _qiblaController?.add(QiblaData(
+      _safeAdd(QiblaData(
         qiblaAngle: qiblaAngle,
         compassHeading: heading,
         relativeAngle: relativeAngle,
-        accuracy: event.accuracy ?? 0,
-        hasInterference: (event.accuracy ?? 0) < 15, // Düşük doğruluk = parazit
+        accuracy: accuracy,
+        hasInterference: accuracy < 15,
+        needsCalibration: needsCalibration,
       ));
     });
   }
+  
+  /// Güvenli stream add - kapalı controller'a ekleme yapmaz
+  void _safeAdd(QiblaData data) {
+    if (!_isDisposed && _qiblaController != null && !_qiblaController!.isClosed) {
+      _qiblaController!.add(data);
+    }
+  }
+  
+  /// Güvenli stream addError - kapalı controller'a ekleme yapmaz
+  void _safeAddError(QiblaError error) {
+    if (!_isDisposed && _qiblaController != null && !_qiblaController!.isClosed) {
+      _qiblaController!.addError(error);
+    }
+  }
+  
+  /// Kaynakları temizle
+  void _cleanupResources() {
+    _compassSubscription?.cancel();
+    _compassSubscription = null;
+    
+    if (_qiblaController != null && !_qiblaController!.isClosed) {
+      _qiblaController!.close();
+    }
+    _qiblaController = null;
+  }
 
-  /// Kıble açısını hesapla (Haversine formülü)
+  /// Kıble açısını hesapla (Great Circle Bearing / Haversine)
   double _calculateQiblaAngle(double userLat, double userLng) {
     // Dereceleri radyana çevir
     final userLatRad = _toRadians(userLat);
@@ -128,6 +183,7 @@ class QiblaService {
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
     } catch (e) {
+      debugPrint('QiblaService: Error getting position: $e');
       return null;
     }
   }
@@ -136,18 +192,19 @@ class QiblaService {
   double _toDegrees(double radians) => radians * 180 / math.pi;
 
   void dispose() {
-    _compassSubscription?.cancel();
-    _qiblaController?.close();
+    _isDisposed = true;
+    _cleanupResources();
   }
 }
 
 /// Kıble verisi modeli
 class QiblaData {
-  final double qiblaAngle;      // Kabe'nin gerçek yönü (0-360)
-  final double compassHeading;   // Pusula yönü (0-360)
-  final double relativeAngle;    // Telefon yönüne göre kıble açısı
-  final double accuracy;         // Pusula doğruluğu
-  final bool hasInterference;    // Manyetik parazit var mı?
+  final double qiblaAngle;        // Kabe'nin gerçek yönü (0-360, Kuzeyden)
+  final double compassHeading;     // Pusula yönü (0-360)
+  final double relativeAngle;      // Telefon yönüne göre kıble açısı (-180 to +180)
+  final double accuracy;           // Pusula doğruluğu (derece)
+  final bool hasInterference;      // Manyetik parazit var mı?
+  final bool needsCalibration;     // Kalibrasyon gerekli mi?
 
   QiblaData({
     required this.qiblaAngle,
@@ -155,10 +212,11 @@ class QiblaData {
     required this.relativeAngle,
     required this.accuracy,
     required this.hasInterference,
+    this.needsCalibration = false,
   });
 
   /// Kıble yönüne bakıyor mu? (±5 derece tolerans)
-  bool get isFacingQibla => relativeAngle.abs() < 5 || (360 - relativeAngle).abs() < 5;
+  bool get isFacingQibla => relativeAngle.abs() < 5;
 }
 
 /// Kıble hata türleri

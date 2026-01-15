@@ -22,7 +22,8 @@ class QiblaPage extends StatefulWidget {
 }
 
 class _QiblaPageState extends State<QiblaPage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  final QiblaService _qiblaService = getIt<QiblaService>();
+  // QiblaService - sayfa açıldığında oluşturulur, kapandığında dispose edilir
+  late final QiblaService _qiblaService;
   
   // Camera State
   CameraController? _cameraController;
@@ -458,7 +459,7 @@ class _QiblaPageState extends State<QiblaPage> with SingleTickerProviderStateMix
                     Text(
                       data.isFacingQibla 
                           ? 'Kıbleye Bakıyorsunuz' 
-                          : 'Açı: ${data.qiblaAngle.toStringAsFixed(1)}°',
+                          : _getDirectionText(data.relativeAngle),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -471,7 +472,7 @@ class _QiblaPageState extends State<QiblaPage> with SingleTickerProviderStateMix
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Kabe bu yönde',
+                      'Kıble açısı: ${data.qiblaAngle.toStringAsFixed(1)}° (Kuzeyden)',
                       style: TextStyle(color: _isARMode ? Colors.white70 : Colors.grey),
                     ),
                   ),
@@ -500,6 +501,15 @@ class _QiblaPageState extends State<QiblaPage> with SingleTickerProviderStateMix
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tamam'))],
       ),
     );
+  }
+  
+  /// Yön metnini hesapla (relative angle based)
+  String _getDirectionText(double relativeAngle) {
+    final absAngle = relativeAngle.abs();
+    if (absAngle < 5) return 'Kıbleye Bakıyorsunuz';
+    
+    final direction = relativeAngle > 0 ? 'Sağa' : 'Sola';
+    return '${absAngle.toStringAsFixed(0)}° $direction Dönün';
   }
 }
 

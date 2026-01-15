@@ -1,9 +1,5 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:injectable/injectable.dart';
-import '../config/app_config.dart';
-
-/// Dynamic Headless CMS Service
-/// Manages all UI texts, feature flags, and global updates remotely.
 
 @lazySingleton
 class RemoteConfigService {
@@ -11,39 +7,35 @@ class RemoteConfigService {
 
   Future<void> initialize() async {
     try {
-      await _remoteConfig.setDefaults(AppConfig.remoteConfigDefaults);
       await _remoteConfig.setConfigSettings(RemoteConfigSettings(
         fetchTimeout: const Duration(minutes: 1),
-        minimumFetchInterval: const Duration(hours: 1),
+        minimumFetchInterval: const Duration(hours: 1), // Production: 1 hour, Dev: 0 can be set here
       ));
-      await fetchAndActivate();
+
+      await _remoteConfig.setDefaults(const {
+        'welcome_message_teheccud': 'Teheccüd Vakti',
+        'welcome_message_sahur': 'Sahur Vakti',
+        'welcome_message_morning': 'Hayırlı Sabahlar',
+        'welcome_message_noon': 'Vakit: Öğle',
+        'welcome_message_afternoon': 'Vakit: İkindi',
+        'welcome_message_evening': 'Hayırlı Akşamlar',
+        'welcome_message_sunset': 'İftar Vakti',
+        'welcome_message_night': 'Hayırlı Geceler',
+        'feature_show_mosque_finder': true,
+        'feature_show_ar_qibla': true,
+        'daily_story_image_url': 'default', // 'default' uses local asset
+        'kandil_mode_enabled': false,
+      });
+
+      await _remoteConfig.fetchAndActivate();
     } catch (e) {
-      // Handle or log error
+      // Remote config fetch failed, defaults will be used
+      print('Remote Config fetch failed: $e');
     }
   }
 
-  Future<void> fetchAndActivate() async {
-    await _remoteConfig.fetchAndActivate();
-  }
-
-  /// Get a string value from CMS (Headless Management)
-  String getString(String key) {
-    return _remoteConfig.getString(key);
-  }
-
-  /// Get a boolean value (Feature Flags)
-  bool getBool(String key) {
-    return _remoteConfig.getBool(key);
-  }
-
-  /// Get an int value
-  int getInt(String key) {
-    return _remoteConfig.getInt(key);
-  }
-
-  /// Dynamic Text Helper: Returns remote value or fallback
-  String getDynamicText(String key, String fallback) {
-    final val = getString(key);
-    return val.isEmpty ? fallback : val;
-  }
+  String getString(String key) => _remoteConfig.getString(key);
+  bool getBool(String key) => _remoteConfig.getBool(key);
+  int getInt(String key) => _remoteConfig.getInt(key);
+  double getDouble(String key) => _remoteConfig.getDouble(key);
 }

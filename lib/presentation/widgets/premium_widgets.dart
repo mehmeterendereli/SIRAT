@@ -254,14 +254,18 @@ class FloatingBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final horizontalMargin = isSmallScreen ? 12.0 : 24.0;
+    final navHeight = isSmallScreen ? 60.0 : 70.0;
     
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, isSmallScreen ? 12 : 24),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: Colors.black.withOpacity(0.15),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
@@ -272,14 +276,14 @@ class FloatingBottomNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
-            height: 70,
+            height: navHeight,
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.85),
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.white.withOpacity(0.85),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 width: 1,
               ),
             ),
@@ -290,12 +294,15 @@ class FloatingBottomNav extends StatelessWidget {
                 final item = entry.value;
                 final isSelected = index == currentIndex;
 
-                return _FloatingNavButton(
-                  icon: item.icon,
-                  label: item.label,
-                  isSelected: isSelected,
-                  selectedColor: item.activeColor ?? const Color(0xFF1B5E20),
-                  onTap: () => onTap(index),
+                return Expanded(
+                  child: _FloatingNavButton(
+                    icon: item.icon,
+                    label: item.label,
+                    isSelected: isSelected,
+                    selectedColor: item.activeColor ?? const Color(0xFF1B5E20),
+                    onTap: () => onTap(index),
+                    isSmallScreen: isSmallScreen,
+                  ),
                 );
               }).toList(),
             ),
@@ -324,6 +331,7 @@ class _FloatingNavButton extends StatelessWidget {
   final bool isSelected;
   final Color selectedColor;
   final VoidCallback onTap;
+  final bool isSmallScreen;
 
   const _FloatingNavButton({
     required this.icon,
@@ -331,27 +339,31 @@ class _FloatingNavButton extends StatelessWidget {
     required this.isSelected,
     required this.selectedColor,
     required this.onTap,
+    this.isSmallScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconSize = isSmallScreen ? 20.0 : 24.0;
     
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 12,
-          vertical: 8,
+          horizontal: isSmallScreen ? 4 : 8,
+          vertical: isSmallScreen ? 6 : 8,
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? selectedColor.withValues(alpha: 0.15)
+              ? selectedColor.withOpacity(0.15)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 20),
         ),
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
@@ -359,16 +371,22 @@ class _FloatingNavButton extends StatelessWidget {
               color: isSelected
                   ? selectedColor
                   : (isDark ? Colors.white60 : Colors.grey),
-              size: 24,
+              size: iconSize,
             ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: selectedColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+            // Always show label on small screens for better UX, but smaller
+            if (isSelected || isSmallScreen) ...[
+              SizedBox(height: isSmallScreen ? 2 : 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? selectedColor : (isDark ? Colors.white60 : Colors.grey),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: isSmallScreen ? 9 : 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

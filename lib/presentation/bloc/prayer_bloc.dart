@@ -90,6 +90,16 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     String? cityName;
     
     try {
+      // First check if location services are enabled
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('PrayerBloc: Location services disabled');
+        // Try to open location settings
+        await Geolocator.openLocationSettings();
+        emit(const PrayerError('GPS kapalı. Lütfen konum servislerini açın ve tekrar deneyin.'));
+        return;
+      }
+      
       if (kIsWeb) {
         // Web-specific location handling
         debugPrint('PrayerBloc: Getting web location...');
@@ -99,11 +109,11 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
           final newPermission = await Geolocator.requestPermission();
           if (newPermission == LocationPermission.denied || 
               newPermission == LocationPermission.deniedForever) {
-            emit(const PrayerError('Konum izni verilmedi'));
+            emit(const PrayerError('Konum izni verilmedi. Ayarlardan izin verin.'));
             return;
           }
         } else if (permission == LocationPermission.deniedForever) {
-          emit(const PrayerError('Konum izni engellendi'));
+          emit(const PrayerError('Konum izni engellendi. Ayarlardan izin verin.'));
           return;
         }
         
@@ -123,11 +133,35 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
           }
         }
       } else {
-        position = await locationService.getCurrentLocation();
+        // Mobile - check permission first
+        LocationPermission permission = await Geolocator.checkPermission();
+        
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.denied) {
+            emit(const PrayerError('Konum izni verilmedi. İzin verin ve tekrar deneyin.'));
+            return;
+          }
+        }
+        
+        if (permission == LocationPermission.deniedForever) {
+          // Open app settings
+          await Geolocator.openAppSettings();
+          emit(const PrayerError('Konum izni engellendi. Ayarlardan izin verin.'));
+          return;
+        }
+        
+        // Now get location
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 15),
+          ),
+        );
       }
       
       if (position == null) {
-        emit(const PrayerError('Konum alınamadı'));
+        emit(const PrayerError('Konum alınamadı. Tekrar deneyin.'));
         return;
       }
       

@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../domain/entities/prayer_time.dart';
+import '../../../core/config/injection.dart';
+import '../../../core/services/remote_config_service.dart';
 
 /// =============================================================================
 /// DAY PHASE - Günün Evreleri
@@ -382,6 +384,7 @@ class CelestialData {
 class SmartGreeting {
   final PrayerTime prayerTime;
   final DateTime now;
+  final RemoteConfigService _remoteConfig = getIt<RemoteConfigService>();
   
   SmartGreeting({required this.prayerTime, DateTime? currentTime})
       : now = currentTime ?? DateTime.now();
@@ -394,19 +397,19 @@ class SmartGreeting {
       case DayPhase.night:
         // Gece yarısı öncesi/sonrası kontrolü
         if (now.hour >= 0 && now.hour < 3) {
-          return 'Teheccüd Vakti';
+          return _remoteConfig.getString('welcome_message_teheccud');
         }
-        return 'Hayırlı Geceler';
+        return _remoteConfig.getString('welcome_message_night');
       case DayPhase.dawn:
-        return 'Sahur Vakti';
+        return _remoteConfig.getString('welcome_message_sahur');
       case DayPhase.morning:
-        return 'Hayırlı Sabahlar';
+        return _remoteConfig.getString('welcome_message_morning');
       case DayPhase.afternoon:
-        return 'Vakit: Öğle';
+        return _remoteConfig.getString('welcome_message_noon');
       case DayPhase.evening:
-        return 'Vakit: İkindi';
+        return _remoteConfig.getString('welcome_message_afternoon');
       case DayPhase.sunset:
-        return 'İftar Vakti';
+        return _remoteConfig.getString('welcome_message_sunset');
     }
   }
 }

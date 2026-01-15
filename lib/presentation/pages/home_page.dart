@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/injection.dart';
+import '../../core/services/remote_config_service.dart';
 import '../bloc/prayer_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../widgets/dynamic_sky/dynamic_prayer_header.dart';
@@ -129,37 +130,75 @@ class _HomeContent extends StatelessWidget {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
     
+    // Get screen width for responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final horizontalPadding = isSmallScreen ? 16.0 : 24.0;
+    
+    // Build action items list dynamically
+    final actionItems = <Widget>[
+      // Zikirmatik (Her zaman açık)
+      _buildActionItem(context, loc.zikirmatik, Icons.touch_app_rounded, AppTheme.emerald, () {
+        _navigateToPage(context, const ZikirmatikPage());
+      }),
+
+      // Cami Bulucu (Future Feature)
+      if (getIt<RemoteConfigService>().getBool('feature_show_mosque_finder'))
+        _buildActionItem(context, 'Cami Bul', Icons.mosque_rounded, Colors.blue, () {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Yakında...')));
+        }),
+
+      // Kıble
+      if (getIt<RemoteConfigService>().getBool('feature_show_ar_qibla'))
+        _buildActionItem(context, loc.qiblaFinder, Icons.explore_rounded, Colors.orange, () {
+          _navigateToPage(context, const QiblaPage());
+        }),
+
+      // İslam AI
+      _buildActionItem(context, 'İslam AI', Icons.psychology_rounded, const Color(0xFF6A1B9A), () {
+        _navigateToPage(context, const IslamAIPage());
+      }),
+
+      // Ayarlar
+      _buildActionItem(context, loc.settings_title, Icons.settings_rounded, const Color(0xFF00796B), () {
+        _navigateToPage(context, const SettingsPage());
+      }),
+    ];
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             loc.quickActions,
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: isSmallScreen ? 18 : null,
+            ),
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.5,
-            children: [
-              _buildActionItem(context, loc.zikirmatik, Icons.touch_app_rounded, AppTheme.emerald, () {
-                _navigateToPage(context, const ZikirmatikPage());
-              }),
-              _buildActionItem(context, loc.qiblaFinder, Icons.explore_rounded, Colors.orange, () {
-                _navigateToPage(context, const QiblaPage());
-              }),
-              _buildActionItem(context, 'İslam AI', Icons.psychology_rounded, const Color(0xFF6A1B9A), () {
-                _navigateToPage(context, const IslamAIPage());
-              }),
-              _buildActionItem(context, loc.settings_title, Icons.settings_rounded, const Color(0xFF00796B), () {
-                _navigateToPage(context, const SettingsPage());
-              }),
-            ],
+          // LayoutBuilder for responsive grid
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final gridWidth = constraints.maxWidth;
+              const spacing = 12.0;
+              final itemWidth = (gridWidth - spacing) / 2;
+              // Dynamic aspect ratio based on available width
+              final itemHeight = (itemWidth / 1.6).clamp(60.0, 90.0);
+              
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: actionItems.map((item) {
+                  return SizedBox(
+                    width: itemWidth,
+                    height: itemHeight,
+                    child: item,
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),
@@ -167,31 +206,46 @@ class _HomeContent extends StatelessWidget {
   }
 
   Widget _buildActionItem(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final iconSize = isSmallScreen ? 24.0 : 30.0;
+    final fontSize = isSmallScreen ? 12.0 : 14.0;
+    
     return Container(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 20),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 30),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
+          borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 20),
+          child: Padding(
+            padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: iconSize),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                      fontSize: fontSize,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
