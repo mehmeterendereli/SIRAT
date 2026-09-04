@@ -62,3 +62,8 @@ ui-debug.log
 .env.local
 .env.*.local
 
+# Firebase project configuration must be generated for a separate local project.
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/lib/firebase_options.dart
+
